@@ -1,0 +1,18 @@
+server:
+  port: 8083 # Runs on port 8083
+
+spring:
+  codec:
+    max-in-memory-size: 500MB # Only limits metadata/headers, not the file stream!
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+# Custom properties we will use in our Java code later
+minio:
+  url: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket-name: prism-videos

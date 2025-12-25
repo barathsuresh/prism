@@ -1,0 +1,25 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: prism-transcoder
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/prism-transcoder-db
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+# Custom Config
+transcoder:
+  ffmpeg-path: ${user.dir}/bin/ffmpeg.exe
+  temp-dir: ${java.io.tmpdir}/prism-transcode
+
+minio:
+  url: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket-name: prism-videos
