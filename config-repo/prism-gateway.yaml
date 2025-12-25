@@ -1,0 +1,10 @@
+example:
+  message: "Hello from the Config Server!"
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: google-test
+          uri: https://google.com
+          predicates:
+            - Path=/google

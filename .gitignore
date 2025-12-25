@@ -1,0 +1,14 @@
+.vscode/
+target/
+*.iml
+.idea/
+*.log
+.DS_Store
+out/
+*.class
+*.jar
+*.war
+*.swp
+hs_err_pid*
+*.orig
+*.rej
