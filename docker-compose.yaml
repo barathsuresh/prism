@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # 1. MongoDB
+  mongo:
+    image: mongo:latest
+    container_name: prism-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db  # <--- Changed to named volume
+    networks:
+      - prism-network
+
+  # 2. RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: prism-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq # <--- Good practice to persist queues too
+    networks:
+      - prism-network
+
+  # 3. MinIO
+  minio:
+    image: minio/minio
+    container_name: prism-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data  # <--- Changed to named volume
+    networks:
+      - prism-network
+
+  # 4. Zipkin (Usually doesn't need persistence for dev, but we can add it if needed)
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: prism-zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - prism-network
+
+# Define the volumes here so Docker manages them
+volumes:
+  mongo_data:
+  minio_data:
+  rabbitmq_data:
+
+networks:
+  prism-network:
+    driver: bridge
