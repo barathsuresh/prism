@@ -2,6 +2,5 @@ server:
   port: 8082 # Catalog runs on 8082
 
 spring:
-  data:
-    mongodb:
-      uri: mongodb://localhost:27017/prism-catalog-db
+  mongodb:
+    uri: mongodb://localhost:27017/prism-catalog-db

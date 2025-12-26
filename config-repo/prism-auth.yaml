@@ -2,6 +2,18 @@ server:
   port: 8081
 
 spring:
-  data:
-    mongodb:
-      uri: mongodb://localhost:27017/prism-auth-db
+  mongodb:
+    uri: mongodb://localhost:27017/prism-auth-db
+
+  # JWT configuration for prism-auth service
+app:
+  jwt:
+    # Secret key for signing tokens; override via environment variable JWT_SECRET
+    secret: ${JWT_SECRET:change-this-in-production}
+    issuer: prism-auth
+    audience: prism
+    expiration: 86400s # 24 hours (Spring Duration format)
+    refreshExpiration: 604800s # 7 days (Spring Duration format)
+    clockSkew: 60s # allowed clock skew in seconds (Spring Duration format)
+    tokenPrefix: Bearer
+    header: Authorization

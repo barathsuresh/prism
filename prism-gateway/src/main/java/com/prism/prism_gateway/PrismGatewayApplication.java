@@ -26,25 +26,25 @@ public class PrismGatewayApplication {
                 // 2. Auth Service Route
                 // Any URL starting with /auth goes to the Login/Register service
                 .route("auth-service", p -> p
-                        .path("/auth/**")
+                        .path("/api/auth/**")
                         .uri("lb://prism-auth")) // lb:// means "Load Balance" using Eureka
 
                 // 3. Catalog Service Route
                 // Any URL starting with /videos goes to the Metadata service
                 .route("catalog-service", p -> p
-                        .path("/videos/**")
+                        .path("/api/videos/**")
                         .uri("lb://prism-catalog"))
 
                 // 4. Upload Service Route
                 // Any URL starting with /uploads goes to the File Ingest service
                 .route("upload-service", p -> p
-                        .path("/uploads/**")
+                        .path("/api/uploads/**")
                         .uri("lb://prism-upload"))
 
                 // 5. Streaming Service Route
                 // Any URL starting with /stream goes to the Video Player service
                 .route("stream-service", p -> p
-                        .path("/stream/**")
+                        .path("/api/stream/**")
                         .uri("lb://prism-stream"))
 
                 .build();
