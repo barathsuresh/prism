@@ -1,11 +1,13 @@
 package com.prism.prism_auth.dto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.prism.prism_auth.model.enums.ApiKeyScope;
 import com.prism.prism_auth.model.enums.ApiKeyType;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,7 +36,7 @@ public class ApiKeyRequest {
     @Size(min = 1, max = 100, message = "Key label must be between 1-100 characters")
     private String label;
 
-    @NotBlank(message = "Key type is required")
+    @NotNull(message = "Key type is required")
     private ApiKeyType type;
 
     /**
@@ -42,4 +44,9 @@ public class ApiKeyRequest {
      * Example: [VIDEOS_UPLOAD, VIDEOS_READ, ANALYTICS_READ]
      */
     private List<ApiKeyScope> scopes;
+
+    /**
+     * Optional expiration date for this key
+     */
+    private LocalDateTime expiresAt;
 }

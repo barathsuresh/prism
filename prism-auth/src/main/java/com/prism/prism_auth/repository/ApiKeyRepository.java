@@ -63,6 +63,15 @@ public interface ApiKeyRepository extends MongoRepository<ApiKey, String> {
     Optional<ApiKey> findByKeyHash(String keyHash);
 
     /**
+     * Find a key by its public prefix.
+     * Used during validation to retrieve the stored hash and compare secrets.
+     *
+     * @param keyPrefix the public key prefix (e.g., "pk_...")
+     * @return Optional containing the key if found
+     */
+    Optional<ApiKey> findByKeyPrefix(String keyPrefix);
+
+    /**
      * Find all active keys for a specific app.
      * Convenient method for getting only ACTIVE keys.
      * 

@@ -66,6 +66,7 @@ public class SecurityConfiguration {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/public/**").permitAll() // Allow auth endpoints
+                        .requestMatchers("/api/auth/internal/**").permitAll() // Allow internal service validation
                         .requestMatchers("/api/actuator/health").permitAll() // Allow health check
                         .requestMatchers("/api/auth/admin/**").hasRole("ADMIN") // Admin endpoints
                         .anyRequest().authenticated() // Secure other endpoints

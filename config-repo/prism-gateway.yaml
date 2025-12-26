@@ -8,3 +8,14 @@ spring:
           uri: https://google.com
           predicates:
             - Path=/google
+# API key enforcement configuration
+gateway:
+  apiKey:
+    # Define route patterns and required scopes for those requests
+    enforcement:
+      - path: /api/upload/**
+        scopes: ["videos:upload"]
+      - path: /api/catalog/**
+        scopes: ["videos:read"]
+      - path: /api/stream/**
+        scopes: ["videos:read"]
