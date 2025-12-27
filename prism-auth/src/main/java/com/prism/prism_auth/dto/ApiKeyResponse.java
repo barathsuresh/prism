@@ -35,6 +35,11 @@ public class ApiKeyResponse {
     private String appId;
 
     /**
+     * Owner's username (for display convenience)
+     */
+    private String ownerUserName;
+
+    /**
      * Human-readable label
      * Example: "Upload Key", "Admin Key"
      */

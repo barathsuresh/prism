@@ -4,3 +4,6 @@ server:
 spring:
   mongodb:
     uri: mongodb://localhost:27017/prism-catalog-db
+  data:
+    mongodb:
+      auto-index-creation: true # Automatically create indexes from @CompoundIndex annotations

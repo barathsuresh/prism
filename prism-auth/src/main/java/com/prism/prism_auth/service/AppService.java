@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AppService {
 
     private final AppRepository appRepository;
+    private final ApiKeyService apiKeyService;
 
     /**
      * Create a new app for a user
@@ -200,6 +201,10 @@ public class AppService {
         // Soft delete
         app.setDeletedAt(LocalDateTime.now());
         appRepository.save(app);
+
+        // Revoke all API keys associated with this app
+        int revoked = apiKeyService.revokeAllKeysForApp(app.getId(), ownerId, "App deleted by owner");
+        log.info("Deleted app {} and revoked {} keys", app.getId(), revoked);
     }
 
     /**
@@ -370,6 +375,10 @@ public class AppService {
         // Soft delete
         app.setDeletedAt(LocalDateTime.now());
         appRepository.save(app);
+
+        // Revoke all API keys associated with this app
+        int revoked = apiKeyService.revokeAllKeysForApp(app.getId(), ownerId, "App deleted by owner");
+        log.info("Deleted app {} (slug={}) and revoked {} keys", app.getId(), slug, revoked);
     }
 
     /**

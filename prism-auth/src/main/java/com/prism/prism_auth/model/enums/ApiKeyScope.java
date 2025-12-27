@@ -19,13 +19,20 @@ public enum ApiKeyScope {
     VIDEOS_UPDATE("videos:update"),
     VIDEOS_DELETE("videos:delete"),
 
+    // Catalog Operations
+    CATALOG_READ("catalog:read"),
+    CATALOG_WRITE("catalog:write"),
+
     // Analytics
     ANALYTICS_READ("analytics:read"),
 
     // Key Management (for admins)
     KEYS_CREATE("keys:create"),
     KEYS_REVOKE("keys:revoke"),
-    KEYS_LIST("keys:list");
+    KEYS_LIST("keys:list"),
+
+    // Internal Service-to-Service
+    INTERNAL_SERVICE("internal:service");
 
     /**
      * The scope value used in documentation and API

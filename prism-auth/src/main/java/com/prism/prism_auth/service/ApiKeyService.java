@@ -43,13 +43,15 @@ public class ApiKeyService {
     /**
      * Create a new API key for an app
      * 
-     * @param appId   The app ID
-     * @param ownerId The developer/owner ID
-     * @param request API key creation request
+     * @param appId         The app ID
+     * @param ownerId       The developer/owner ID
+     * @param ownerUserName The developer/owner username (for convenience)
+     * @param request       API key creation request
      * @return ApiKeyCreateResponse with the plaintext key (returned once only)
      */
     @Transactional
-    public ApiKeyCreateResponse createApiKey(String appId, String ownerId, ApiKeyRequest request) {
+    public ApiKeyCreateResponse createApiKey(String appId, String ownerId, String ownerUserName,
+            ApiKeyRequest request) {
         // Generate unique key prefix and secret
         String keyPrefix = generateKeyPrefix();
         String keySecret = generateKeySecret();
@@ -62,6 +64,7 @@ public class ApiKeyService {
         ApiKey apiKey = ApiKey.builder()
                 .appId(appId)
                 .ownerId(ownerId)
+                .ownerUserName(ownerUserName)
                 .label(request.getLabel())
                 .keyPrefix(keyPrefix)
                 .keyHash(secretHash)
@@ -149,6 +152,7 @@ public class ApiKeyService {
         return ApiKeyResponse.builder()
                 .id(apiKey.getId())
                 .appId(apiKey.getAppId())
+                .ownerUserName(apiKey.getOwnerUserName())
                 .label(apiKey.getLabel())
                 .keyPrefix(apiKey.getKeyPrefix())
                 .type(apiKey.getType())
@@ -174,6 +178,20 @@ public class ApiKeyService {
         if (!keys.isEmpty() && !keys.get(0).getOwnerId().equals(ownerId)) {
             throw new IllegalArgumentException("You don't have permission to view these keys");
         }
+
+        return keys.stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    /**
+     * List all API keys for the current user across all apps
+     * 
+     * @param ownerUserName The username of the key owner
+     * @return List of API keys owned by this user (secrets are never included)
+     */
+    public List<ApiKeyResponse> listUserApiKeys(String ownerUserName) {
+        List<ApiKey> keys = apiKeyRepository.findByOwnerUserName(ownerUserName);
 
         return keys.stream()
                 .map(this::mapToResponse)
@@ -233,6 +251,7 @@ public class ApiKeyService {
         return ApiKeyResponse.builder()
                 .id(apiKey.getId())
                 .appId(apiKey.getAppId())
+                .ownerUserName(apiKey.getOwnerUserName())
                 .label(apiKey.getLabel())
                 .keyPrefix(apiKey.getKeyPrefix())
                 .type(apiKey.getType())
@@ -257,5 +276,44 @@ public class ApiKeyService {
      */
     private String generateKeySecret() {
         return KEY_SECRET_PREFIX + UUID.randomUUID().toString().replace("-", "").substring(0, SECRET_LENGTH);
+    }
+
+    /**
+     * Revoke all ACTIVE API keys for a given app.
+     * Intended to be called when an app is deleted (soft delete).
+     *
+     * @param appId   The app ID whose keys should be revoked
+     * @param ownerId The owner ID (ownership verification)
+     * @param reason  Reason to record on the key's revokedReason
+     * @return number of keys revoked
+     */
+    @Transactional
+    public int revokeAllKeysForApp(String appId, String ownerId, String reason) {
+        List<ApiKey> activeKeys = apiKeyRepository.findByAppIdAndStatusEquals(appId, ApiKeyStatus.ACTIVE);
+
+        if (activeKeys.isEmpty()) {
+            return 0;
+        }
+
+        int revoked = 0;
+        LocalDateTime now = LocalDateTime.now();
+        for (ApiKey key : activeKeys) {
+            // Safety check: all keys of an app should belong to the same owner
+            if (!key.getOwnerId().equals(ownerId)) {
+                log.warn("Skipping key {} due to owner mismatch (expected {}, found {})",
+                        key.getKeyPrefix(), ownerId, key.getOwnerId());
+                continue;
+            }
+            key.setStatus(ApiKeyStatus.REVOKED);
+            key.setRevokedAt(now);
+            key.setRevokedReason((reason == null || reason.isBlank()) ? "App deleted" : reason);
+            apiKeyRepository.save(key);
+            revoked++;
+        }
+
+        if (revoked > 0) {
+            log.info("Revoked {} API keys for app {}", revoked, appId);
+        }
+        return revoked;
     }
 }

@@ -34,7 +34,7 @@ public class PrismGatewayApplication {
                                 // 3. Catalog Service Route
                                 // Any URL starting with /videos goes to the Metadata service
                                 .route("catalog-service", p -> p
-                                                .path("/api/videos/**")
+                                                .path("/api/catalog/**")
                                                 .uri("lb://prism-catalog"))
 
                                 // 4. Upload Service Route

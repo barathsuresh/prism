@@ -6,6 +6,7 @@ import java.util.List;
 import com.prism.prism_auth.model.enums.ApiKeyScope;
 import com.prism.prism_auth.model.enums.ApiKeyType;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -29,8 +30,15 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ApiKeyRequest {
 
-    @NotBlank(message = "App ID is required")
+    /**
+     * App ID (optional if appSlug is provided)
+     */
     private String appId;
+
+    /**
+     * App slug (optional if appId is provided)
+     */
+    private String appSlug;
 
     @NotBlank(message = "Key label is required")
     @Size(min = 1, max = 100, message = "Key label must be between 1-100 characters")
@@ -49,4 +57,14 @@ public class ApiKeyRequest {
      * Optional expiration date for this key
      */
     private LocalDateTime expiresAt;
+
+    /**
+     * Ensure either appId or appSlug is provided
+     */
+    @AssertTrue(message = "Either appId or appSlug must be provided")
+    public boolean isAppIdOrSlugProvided() {
+        boolean hasId = this.appId != null && !this.appId.isBlank();
+        boolean hasSlug = this.appSlug != null && !this.appSlug.isBlank();
+        return hasId || hasSlug;
+    }
 }

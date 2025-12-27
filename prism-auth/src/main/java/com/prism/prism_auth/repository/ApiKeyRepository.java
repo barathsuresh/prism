@@ -90,6 +90,15 @@ public interface ApiKeyRepository extends MongoRepository<ApiKey, String> {
     List<ApiKey> findByOwnerId(String ownerId);
 
     /**
+     * Find all keys created by a specific user by username.
+     * Useful for listing all API keys for the current authenticated user.
+     * 
+     * @param ownerUserName the username of the key owner
+     * @return list of keys created by this user
+     */
+    List<ApiKey> findByOwnerUserName(String ownerUserName);
+
+    /**
      * Check if a key hash already exists.
      * Used during key generation to ensure no duplicates.
      * 

@@ -18,6 +18,7 @@ import com.prism.prism_auth.dto.ApiKeyRequest;
 import com.prism.prism_auth.dto.ApiKeyResponse;
 import com.prism.prism_auth.security.services.UserPrincipal;
 import com.prism.prism_auth.service.ApiKeyService;
+import com.prism.prism_auth.service.AppService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 public class ApiKeyController {
 
     private final ApiKeyService apiKeyService;
+    private final AppService appService;
 
     /**
      * Create a new API key for an app
@@ -51,9 +53,18 @@ public class ApiKeyController {
             @Valid @RequestBody ApiKeyRequest request,
             @AuthenticationPrincipal UserPrincipal userDetails) {
 
+        // Resolve appId from either appId or appSlug (owner-verified)
+        String ownerId = userDetails.getId();
+        String appId = request.getAppId();
+        if ((appId == null || appId.isBlank()) && request.getAppSlug() != null && !request.getAppSlug().isBlank()) {
+            var app = appService.getAppBySlug(request.getAppSlug(), ownerId);
+            appId = app.getId();
+        }
+
         ApiKeyCreateResponse response = apiKeyService.createApiKey(
-                request.getAppId(),
-                userDetails.getId(),
+                appId,
+                ownerId,
+                userDetails.getUsername(),
                 request);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -76,6 +87,23 @@ public class ApiKeyController {
             @AuthenticationPrincipal UserPrincipal userDetails) {
 
         List<ApiKeyResponse> keys = apiKeyService.listApiKeys(appId, userDetails.getId());
+        return ResponseEntity.ok(keys);
+    }
+
+    /**
+     * List all API keys for the current authenticated user across all apps
+     * 
+     * GET /api/auth/api-keys/me
+     * Requires: JWT authentication
+     * 
+     * @param userDetails Authenticated user
+     * @return List of all API keys owned by this user (secrets never included)
+     */
+    @GetMapping("/me")
+    public ResponseEntity<List<ApiKeyResponse>> listMyApiKeys(
+            @AuthenticationPrincipal UserPrincipal userDetails) {
+
+        List<ApiKeyResponse> keys = apiKeyService.listUserApiKeys(userDetails.getUsername());
         return ResponseEntity.ok(keys);
     }
 

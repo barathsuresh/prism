@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import lombok.Data;
 
 @Configuration
-@ConfigurationProperties(prefix = "gateway.apiKey")
+@ConfigurationProperties(prefix = "gateway.apikey")
 @Data
 public class ApiKeyEnforcementProperties {
 
@@ -17,6 +17,7 @@ public class ApiKeyEnforcementProperties {
     @Data
     public static class RouteScope {
         private String path; // Ant-style pattern
+        private String method; // Optional: GET, POST, PUT, DELETE, etc.
         private List<String> scopes; // e.g., ["videos:upload"]
     }
 }

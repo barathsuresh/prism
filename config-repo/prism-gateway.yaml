@@ -1,21 +1,47 @@
 example:
   message: "Hello from the Config Server!"
-spring:
-  cloud:
-    gateway:
-      routes:
-        - id: google-test
-          uri: https://google.com
-          predicates:
-            - Path=/google
-# API key enforcement configuration
+
+# NOTE: Routes are defined via @Bean in PrismGatewayApplication.java
+# Do NOT use spring.cloud.gateway.routes property here
+
+# API key enforcement configuration (used by ApiKeyValidationFilter global filter)
 gateway:
-  apiKey:
+  apikey:
     # Define route patterns and required scopes for those requests
     enforcement:
+      # All internal service-to-service endpoints (no API key required)
+      - path: /api/**/internal/**
+        scopes: []
+
+      # Public catalog endpoints (no API key required)
+      - path: /api/catalog/videos/public/**
+        scopes: []
+
+      # Upload service - write operations (videos:upload scope)
       - path: /api/upload/**
+        method: POST
         scopes: ["videos:upload"]
-      - path: /api/catalog/**
-        scopes: ["videos:read"]
+      - path: /api/upload/**
+        method: PUT
+        scopes: ["videos:upload"]
+
+      # Catalog service - read operations (catalog:read scope)
+      - path: /api/catalog/videos/**
+        method: GET
+        scopes: ["catalog:read"]
+
+      # Catalog service - write operations (catalog:write scope)
+      - path: /api/catalog/videos/**
+        method: POST
+        scopes: ["catalog:write"]
+      - path: /api/catalog/videos/**
+        method: PUT
+        scopes: ["catalog:write"]
+      - path: /api/catalog/videos/**
+        method: DELETE
+        scopes: ["catalog:write"]
+
+      # Stream service - read only (videos:read scope)
       - path: /api/stream/**
+        method: GET
         scopes: ["videos:read"]
