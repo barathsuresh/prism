@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prism Video Upload Test</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 28px;
+        margin-bottom: 8px;
+      }
+
+      .header p {
+        opacity: 0.9;
+        font-size: 14px;
+      }
+
+      .content {
+        padding: 30px;
+      }
+
+      .section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        display: none;
+      }
+
+      .section.active {
+        display: block;
+      }
+
+      .section h2 {
+        color: #667eea;
+        margin-bottom: 20px;
+        font-size: 20px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 500;
+        font-size: 14px;
+      }
+
+      input[type="text"],
+      input[type="password"],
+      textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e1e4e8;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.3s;
+      }
+
+      input:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+
+      button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .drop-zone {
+        border: 3px dashed #667eea;
+        border-radius: 8px;
+        padding: 40px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: white;
+      }
+
+      .drop-zone:hover {
+        border-color: #764ba2;
+        background: #f8f9fa;
+      }
+
+      .drop-zone.dragging {
+        border-color: #764ba2;
+        background: #f0f0ff;
+      }
+
+      .drop-zone p {
+        margin: 10px 0;
+        color: #666;
+      }
+
+      .drop-zone .icon {
+        font-size: 48px;
+        margin-bottom: 10px;
+      }
+
+      .progress-container {
+        margin-top: 20px;
+        display: none;
+      }
+
+      .progress-container.active {
+        display: block;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 30px;
+        background: #e1e4e8;
+        border-radius: 15px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        transition: width 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 12px;
+      }
+
+      .status {
+        margin-top: 10px;
+        padding: 12px;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .status.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .status.info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+
+      .info-box {
+        background: white;
+        padding: 15px;
+        border-radius: 6px;
+        margin-top: 15px;
+        border: 1px solid #e1e4e8;
+      }
+
+      .info-box h4 {
+        color: #667eea;
+        margin-bottom: 10px;
+        font-size: 14px;
+      }
+
+      .info-box p {
+        margin: 5px 0;
+        font-size: 13px;
+        color: #666;
+      }
+
+      .info-box strong {
+        color: #333;
+      }
+
+      .file-info {
+        display: none;
+        margin-top: 15px;
+        padding: 15px;
+        background: white;
+        border-radius: 6px;
+        border: 1px solid #e1e4e8;
+      }
+
+      .file-info.active {
+        display: block;
+      }
+
+      .file-info p {
+        margin: 5px 0;
+        font-size: 13px;
+        color: #666;
+      }
+
+      #fileInput {
+        display: none;
+      }
+
+      .step-indicator {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        padding: 0 20px;
+      }
+
+      .step {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        position: relative;
+      }
+
+      .step::before {
+        content: "";
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        width: 100%;
+        height: 2px;
+        background: #e1e4e8;
+        z-index: 0;
+      }
+
+      .step:first-child::before {
+        display: none;
+      }
+
+      .step-number {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #e1e4e8;
+        color: #666;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 14px;
+        position: relative;
+        z-index: 1;
+        margin-bottom: 5px;
+      }
+
+      .step.completed .step-number {
+        background: #667eea;
+        color: white;
+      }
+
+      .step.active .step-number {
+        background: #764ba2;
+        color: white;
+      }
+
+      .step-label {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🎬 Prism Video Upload</h1>
+        <p>Test your video upload service with real-time progress tracking</p>
+      </div>
+
+      <div class="content">
+        <div class="step-indicator">
+          <div class="step active" id="step1">
+            <div class="step-number">1</div>
+            <div class="step-label">Create Video</div>
+          </div>
+          <div class="step" id="step2">
+            <div class="step-number">2</div>
+            <div class="step-label">Upload</div>
+          </div>
+        </div>
+
+        <!-- Step 1: Create Video -->
+        <div class="section active" id="createVideoSection">
+          <h2>Step 1: Create Video Entry</h2>
+          <div class="form-group">
+            <label for="apiKey">API Key</label>
+            <input
+              type="text"
+              id="apiKeyInput"
+              placeholder="Enter your API key"
+            />
+          </div>
+          <div class="form-group">
+            <label for="videoTitle">Video Title</label>
+            <input type="text" id="videoTitle" placeholder="My Awesome Video" />
+          </div>
+          <div class="form-group">
+            <label for="videoDescription">Description</label>
+            <textarea
+              id="videoDescription"
+              placeholder="Describe your video..."
+            ></textarea>
+          </div>
+          <button onclick="createVideo()">Create Video Entry</button>
+          <div id="createVideoStatus"></div>
+        </div>
+
+        <!-- Step 2: Upload -->
+        <div class="section" id="uploadSection">
+          <h2>Step 2: Upload Video File</h2>
+          <div class="info-box">
+            <h4>✓ Video entry created</h4>
+            <p><strong>Video ID:</strong> <span id="displayVideoId"></span></p>
+            <p><strong>Title:</strong> <span id="displayTitle"></span></p>
+          </div>
+
+          <div
+            class="drop-zone"
+            id="dropZone"
+            onclick="document.getElementById('fileInput').click()"
+          >
+            <div class="icon">📁</div>
+            <p><strong>Click to select</strong> or drag and drop</p>
+            <p>Supports: MP4, AVI, MOV, MKV, FLV, WMV, WebM (Max: 5GB)</p>
+          </div>
+          <input
+            type="file"
+            id="fileInput"
+            accept="video/*"
+            onchange="handleFileSelect(event)"
+          />
+
+          <div class="file-info" id="fileInfo">
+            <p><strong>Selected file:</strong> <span id="fileName"></span></p>
+            <p><strong>Size:</strong> <span id="fileSize"></span></p>
+            <p><strong>Type:</strong> <span id="fileType"></span></p>
+          </div>
+
+          <div style="margin-top: 20px">
+            <button id="uploadBtn" onclick="uploadVideo()" disabled>
+              Upload Video
+            </button>
+          </div>
+
+          <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill" style="width: 0%">
+                0%
+              </div>
+            </div>
+            <div id="progressStatus"></div>
+          </div>
+
+          <div id="uploadStatus"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = "http://localhost:8080";
+      let apiKey = "";
+      let videoId = "";
+      let selectedFile = null;
+      let eventSource = null;
+
+      // Step management
+      function goToStep(stepNumber) {
+        // Update step indicators
+        for (let i = 1; i <= 2; i++) {
+          const step = document.getElementById(`step${i}`);
+          step.classList.remove("active", "completed");
+          if (i < stepNumber) {
+            step.classList.add("completed");
+          } else if (i === stepNumber) {
+            step.classList.add("active");
+          }
+        }
+
+        // Show correct section
+        document.querySelectorAll(".section").forEach((section) => {
+          section.classList.remove("active");
+        });
+
+        const sectionMap = {
+          1: "createVideoSection",
+          2: "uploadSection",
+        };
+
+        document.getElementById(sectionMap[stepNumber]).classList.add("active");
+      }
+
+      // Create Video
+      async function createVideo() {
+        const title = document.getElementById("videoTitle").value;
+        const description = document.getElementById("videoDescription").value;
+        const statusDiv = document.getElementById("createVideoStatus");
+
+        if (!title) {
+          showStatus(statusDiv, "Please enter a video title", "error");
+          return;
+        }
+
+        try {
+          showStatus(statusDiv, "Creating video entry...", "info");
+
+          const response = await fetch(`${API_BASE}/api/catalog/videos`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Api-Key": apiKey,
+            },
+            body: JSON.stringify({ title, description }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to create video entry");
+          }
+
+          const data = await response.json();
+          videoId = data.id;
+
+          document.getElementById("displayVideoId").textContent = videoId;
+          document.getElementById("displayTitle").textContent = title;
+          showStatus(
+            statusDiv,
+            "✓ Video entry created successfully!",
+            "success"
+          );
+
+          setTimeout(() => goToStep(3), 1000);
+        } catch (error) {
+          showStatus(statusDiv, `Error: ${error.message}`, "error");
+        }
+      }
+
+      // File handling
+      const dropZone = document.getElementById("dropZone");
+
+      ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+      });
+
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      ["dragenter", "dragover"].forEach((eventName) => {
+        dropZone.addEventListener(
+          eventName,
+          () => dropZone.classList.add("dragging"),
+          false
+        );
+      });
+
+      ["dragleave", "drop"].forEach((eventName) => {
+        dropZone.addEventListener(
+          eventName,
+          () => dropZone.classList.remove("dragging"),
+          false
+        );
+      });
+
+      dropZone.addEventListener("drop", handleDrop, false);
+
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) {
+          selectedFile = files[0];
+          displayFileInfo();
+        }
+      }
+
+      function handleFileSelect(event) {
+        if (event.target.files.length > 0) {
+          selectedFile = event.target.files[0];
+          displayFileInfo();
+        }
+      }
+
+      function displayFileInfo() {
+        document.getElementById("fileName").textContent = selectedFile.name;
+        document.getElementById("fileSize").textContent = formatBytes(
+          selectedFile.size
+        );
+        document.getElementById("fileType").textContent = selectedFile.type;
+        document.getElementById("fileInfo").classList.add("active");
+        document.getElementById("uploadBtn").disabled = false;
+      }
+
+      // Create Video
+      async function createVideo() {
+        apiKey = document.getElementById("apiKeyInput").value.trim();
+        const title = document.getElementById("videoTitle").value;
+        const description = document.getElementById("videoDescription").value;
+        const statusDiv = document.getElementById("createVideoStatus");
+
+        if (!apiKey) {
+          showStatus(statusDiv, "Please enter your API key", "error");
+          return;
+        }
+
+        if (!title) {
+          showStatus(statusDiv, "Please enter a video title", "error");
+          return;
+        }
+
+        try {
+          showStatus(statusDiv, "Creating video entry...", "info");
+
+          const response = await fetch(`${API_BASE}/api/catalog/videos`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Api-Key": apiKey,
+            },
+            body: JSON.stringify({ title, description }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to create video entry");
+          }
+
+          const data = await response.json();
+          videoId = data.id;
+
+          document.getElementById("displayVideoId").textContent = videoId;
+          document.getElementById("displayTitle").textContent = title;
+          showStatus(
+            statusDiv,
+            "✓ Video entry created successfully!",
+            "success"
+          );
+
+          setTimeout(() => goToStep(2), 1000);
+        } catch (error) {
+          showStatus(statusDiv, `Error: ${error.message}`, "error");
+        }
+      }
+
+      // Upload Video
+      async function uploadVideo() {
+        if (!selectedFile) {
+          alert("Please select a file first");
+          return;
+        }
+
+        const statusDiv = document.getElementById("uploadStatus");
+        const progressContainer = document.getElementById("progressContainer");
+        const uploadBtn = document.getElementById("uploadBtn");
+
+        try {
+          uploadBtn.disabled = true;
+          progressContainer.classList.add("active");
+          showStatus(statusDiv, "Starting upload...", "info");
+
+          // Connect to SSE for progress
+          connectToProgressStream();
+
+          // Upload file
+          const formData = new FormData();
+          formData.append("file", selectedFile);
+
+          const response = await fetch(
+            `${API_BASE}/api/upload/videos/${videoId}/file`,
+            {
+              method: "POST",
+              headers: {
+                "X-Api-Key": apiKey,
+              },
+              body: formData,
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error("Upload failed");
+          }
+
+          const data = await response.json();
+          showStatus(statusDiv, `✓ ${data.message}`, "success");
+        } catch (error) {
+          showStatus(statusDiv, `Error: ${error.message}`, "error");
+          uploadBtn.disabled = false;
+          if (eventSource) {
+            eventSource.close();
+          }
+        }
+      }
+
+      function connectToProgressStream() {
+        // Note: EventSource doesn't support custom headers
+        // The gateway should allow GET requests to progress endpoint
+        // Add timestamp to prevent caching
+        const timestamp = new Date().getTime();
+        eventSource = new EventSource(
+          `${API_BASE}/api/upload/videos/${videoId}/progress`
+        );
+
+        eventSource.onmessage = function (event) {
+          const progress = JSON.parse(event.data);
+          updateProgress(progress);
+        };
+
+        eventSource.onerror = function (error) {
+          console.error("SSE Error:", error);
+          eventSource.close();
+        };
+      }
+
+      function updateProgress(progress) {
+        const progressFill = document.getElementById("progressFill");
+        const progressStatus = document.getElementById("progressStatus");
+
+        progressFill.style.width = progress.percentage + "%";
+        progressFill.textContent = progress.percentage + "%";
+
+        const statusHtml = `
+                <div class="status info" style="margin-top: 10px;">
+                    <strong>Status:</strong> ${progress.status}<br>
+                    <strong>Uploaded:</strong> ${formatBytes(
+                      progress.bytesUploaded
+                    )} / ${formatBytes(progress.totalBytes)}<br>
+                    <strong>Message:</strong> ${progress.message}
+                </div>
+            `;
+        progressStatus.innerHTML = statusHtml;
+
+        if (progress.status === "COMPLETED") {
+          if (eventSource) {
+            eventSource.close();
+          }
+        }
+      }
+
+      function showStatus(element, message, type) {
+        element.innerHTML = `<div class="status ${type}" style="margin-top: 15px;">${message}</div>`;
+      }
+
+      function formatBytes(bytes) {
+        if (bytes === 0) return "0 Bytes";
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return (
+          Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i]
+        );
+      }
+    </script>
+  </body>
+</html>

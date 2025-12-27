@@ -9,8 +9,7 @@
             "projectName": "prism-discovery",
             "args": "",
             "envFile": "${workspaceFolder}/.env",
-            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=49261 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=prism-discovery"
-            ,
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=49261 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=prism-discovery",
             "preLaunchTask": "Load .env"
         },
         {
@@ -22,8 +21,7 @@
             "projectName": "prism-config",
             "args": "",
             "envFile": "${workspaceFolder}/.env",
-            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=59378 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=prism-config"
-            ,
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=59378 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=prism-config",
             "preLaunchTask": "Load .env"
         },
         {
@@ -35,8 +33,7 @@
             "projectName": "prism-gateway",
             "args": "",
             "envFile": "${workspaceFolder}/.env",
-            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=59496 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=prism-gateway"
-            ,
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=59496 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=prism-gateway",
             "preLaunchTask": "Load .env"
         },
         {
@@ -47,9 +44,9 @@
             "mainClass": "com.prism.prism_auth.PrismAuthApplication",
             "projectName": "prism-auth",
             "args": "",
-            "envFile": "${workspaceFolder}/.env"
-            ,
-            "preLaunchTask": "Load .env"
+            "envFile": "${workspaceFolder}/.env",
+            "preLaunchTask": "Load .env",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=63163 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=prism-auth"
         },
         {
             "type": "java",
@@ -59,9 +56,9 @@
             "mainClass": "com.prism.prism_catalog.PrismCatalogApplication",
             "projectName": "prism-catalog",
             "args": "",
-            "envFile": "${workspaceFolder}/.env"
-            ,
-            "preLaunchTask": "Load .env"
+            "envFile": "${workspaceFolder}/.env",
+            "preLaunchTask": "Load .env",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=63179 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=prism-catalog"
         },
         {
             "type": "java",
@@ -71,9 +68,18 @@
             "mainClass": "com.prism.prism_transcoder.PrismTranscoderApplication",
             "projectName": "prism-transcoder",
             "args": "",
-            "envFile": "${workspaceFolder}/.env"
-            ,
+            "envFile": "${workspaceFolder}/.env",
             "preLaunchTask": "Load .env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-PrismUploadApplication<prism-upload>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.prism.prism_upload.PrismUploadApplication",
+            "projectName": "prism-upload",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
         }
     ]
 }

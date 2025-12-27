@@ -38,9 +38,9 @@ public class PrismGatewayApplication {
                                                 .uri("lb://prism-catalog"))
 
                                 // 4. Upload Service Route
-                                // Any URL starting with /uploads goes to the File Ingest service
+                                // Any URL starting with /upload goes to the File Ingest service
                                 .route("upload-service", p -> p
-                                                .path("/api/uploads/**")
+                                                .path("/api/upload/**")
                                                 .uri("lb://prism-upload"))
 
                                 // 5. Streaming Service Route

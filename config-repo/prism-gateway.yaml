@@ -17,6 +17,11 @@ gateway:
       - path: /api/catalog/videos/public/**
         scopes: []
 
+      # Upload progress endpoint (no API key required for SSE)
+      - path: /api/upload/**/progress
+        method: GET
+        scopes: []
+
       # Upload service - write operations (videos:upload scope)
       - path: /api/upload/**
         method: POST
