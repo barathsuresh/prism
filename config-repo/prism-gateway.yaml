@@ -25,6 +25,11 @@ gateway:
         method: GET
         scopes: []
 
+      # Smart proxy public endpoints (no API key required)
+      - path: /stream/public/**
+        method: GET
+        scopes: []
+
       # Upload progress endpoint (no API key required for SSE)
       - path: /api/upload/**/progress
         method: GET
@@ -56,5 +61,10 @@ gateway:
 
       # Stream service - read only (videos:read scope)
       - path: /api/stream/**
+        method: GET
+        scopes: ["videos:read"]
+
+      # Smart proxy private endpoints - read only (videos:read scope)
+      - path: /stream/**
         method: GET
         scopes: ["videos:read"]

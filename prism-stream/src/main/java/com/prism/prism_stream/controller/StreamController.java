@@ -1,5 +1,6 @@
 package com.prism.prism_stream.controller;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,55 +18,56 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/api/stream")
 @RequiredArgsConstructor
+@ConditionalOnProperty(name = "stream.redirect.enabled", havingValue = "true", matchIfMissing = false)
 public class StreamController {
 
-    private final StreamService streamService;
+        private final StreamService streamService;
 
-    /**
-     * Redirect to HLS master playlist URL stored in Catalog
-     */
-    @GetMapping("/videos/{videoId}/master")
-    public Mono<ResponseEntity<Void>> getMaster(@RequestHeader("X-App-Id") String appId,
-            @PathVariable String videoId) {
-        return streamService.getMasterPlaylistUrl(appId, videoId)
-                .map(url -> ResponseEntity.status(302)
-                        .header(HttpHeaders.LOCATION, url)
-                        .build());
-    }
+        /**
+         * Redirect to HLS master playlist URL stored in Catalog
+         */
+        @GetMapping("/videos/{videoId}/master")
+        public Mono<ResponseEntity<Void>> getMaster(@RequestHeader("X-App-Id") String appId,
+                        @PathVariable String videoId) {
+                return streamService.getMasterPlaylistUrl(appId, videoId)
+                                .map(url -> ResponseEntity.status(302)
+                                                .header(HttpHeaders.LOCATION, url)
+                                                .build());
+        }
 
-    /**
-     * Redirect to thumbnail URL (size: small|medium|large)
-     */
-    @GetMapping("/videos/{videoId}/thumbnail")
-    public Mono<ResponseEntity<Void>> getThumbnail(@RequestHeader("X-App-Id") String appId,
-            @PathVariable String videoId,
-            @RequestParam(defaultValue = "medium") String size) {
-        return streamService.getThumbnailUrl(appId, videoId, size)
-                .map(url -> ResponseEntity.status(302)
-                        .header(HttpHeaders.LOCATION, url)
-                        .build());
-    }
+        /**
+         * Redirect to thumbnail URL (size: small|medium|large)
+         */
+        @GetMapping("/videos/{videoId}/thumbnail")
+        public Mono<ResponseEntity<Void>> getThumbnail(@RequestHeader("X-App-Id") String appId,
+                        @PathVariable String videoId,
+                        @RequestParam(defaultValue = "medium") String size) {
+                return streamService.getThumbnailUrl(appId, videoId, size)
+                                .map(url -> ResponseEntity.status(302)
+                                                .header(HttpHeaders.LOCATION, url)
+                                                .build());
+        }
 
-    /**
-     * PUBLIC: Redirect to HLS master playlist URL (no app header)
-     */
-    @GetMapping("/public/videos/{videoId}/master")
-    public Mono<ResponseEntity<Void>> getPublicMaster(@PathVariable String videoId) {
-        return streamService.getPublicMasterPlaylistUrl(videoId)
-                .map(url -> ResponseEntity.status(302)
-                        .header(HttpHeaders.LOCATION, url)
-                        .build());
-    }
+        /**
+         * PUBLIC: Redirect to HLS master playlist URL (no app header)
+         */
+        @GetMapping("/public/videos/{videoId}/master")
+        public Mono<ResponseEntity<Void>> getPublicMaster(@PathVariable String videoId) {
+                return streamService.getPublicMasterPlaylistUrl(videoId)
+                                .map(url -> ResponseEntity.status(302)
+                                                .header(HttpHeaders.LOCATION, url)
+                                                .build());
+        }
 
-    /**
-     * PUBLIC: Redirect to thumbnail URL (size: small|medium|large)
-     */
-    @GetMapping("/public/videos/{videoId}/thumbnail")
-    public Mono<ResponseEntity<Void>> getPublicThumbnail(@PathVariable String videoId,
-            @RequestParam(defaultValue = "medium") String size) {
-        return streamService.getPublicThumbnailUrl(videoId, size)
-                .map(url -> ResponseEntity.status(302)
-                        .header(HttpHeaders.LOCATION, url)
-                        .build());
-    }
+        /**
+         * PUBLIC: Redirect to thumbnail URL (size: small|medium|large)
+         */
+        @GetMapping("/public/videos/{videoId}/thumbnail")
+        public Mono<ResponseEntity<Void>> getPublicThumbnail(@PathVariable String videoId,
+                        @RequestParam(defaultValue = "medium") String size) {
+                return streamService.getPublicThumbnailUrl(videoId, size)
+                                .map(url -> ResponseEntity.status(302)
+                                                .header(HttpHeaders.LOCATION, url)
+                                                .build());
+        }
 }

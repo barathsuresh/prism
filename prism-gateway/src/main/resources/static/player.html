@@ -164,8 +164,9 @@
     <main class="card">
       <h1>Prism Stream Player</h1>
       <p class="lead">
-        Enter an API key (if needed) and video ID. The player will call the
-        stream service, follow the presigned HLS URL, and start playback.
+        Enter an API key and video ID. The player calls the Stream service smart
+        proxy, which fetches HLS from MinIO and streams it through the service
+        (no redirects).
       </p>
 
       <form id="player-form">
@@ -251,25 +252,13 @@
         videoEl.load();
       }
 
-      async function resolveUrlThroughGateway(url, headers) {
-        const resp = await fetch(url, {
-          method: "GET",
-          headers,
-          redirect: "follow",
-        });
-        if (!resp.ok) {
-          throw new Error(`Gateway responded with ${resp.status}`);
-        }
-        return resp.url;
-      }
-
       function buildEndpoint(baseUrl, videoId, isPublic) {
         const trimmedBase = baseUrl.endsWith("/")
           ? baseUrl.slice(0, -1)
           : baseUrl;
         const path = isPublic
-          ? `/api/stream/public/videos/${encodeURIComponent(videoId)}/master`
-          : `/api/stream/videos/${encodeURIComponent(videoId)}/master`;
+          ? `/stream/public/${encodeURIComponent(videoId)}/master.m3u8`
+          : `/stream/${encodeURIComponent(videoId)}/master.m3u8`;
         return `${trimmedBase}${path}`;
       }
 
@@ -330,28 +319,17 @@
             hlsInstance.attachMedia(videoEl);
             setMeta([
               `Mode: ${isPublic ? "public" : "private"}`,
-              `Gateway endpoint: ${endpoint}`,
+              `Proxy endpoint: ${endpoint}`,
             ]);
           } else {
-            // Native HLS (Safari) or fallback: resolve redirect first when headers are needed
-            if (isPublic) {
-              videoEl.src = endpoint;
-              await videoEl.play();
-              setStatus("Streaming via native HLS (public). ");
-              setMeta([`Mode: public`, `Gateway endpoint: ${endpoint}`]);
-            } else {
-              const resolved = await resolveUrlThroughGateway(endpoint, {
-                "X-API-Key": apiKey,
-              });
-              videoEl.src = resolved;
-              await videoEl.play();
-              setStatus("Streaming via native HLS (resolved presigned URL).");
-              setMeta([
-                `Mode: private`,
-                `Gateway endpoint: ${endpoint}`,
-                `Presigned URL: ${resolved}`,
-              ]);
-            }
+            // Native HLS (Safari): stream directly from proxy endpoint
+            videoEl.src = endpoint;
+            await videoEl.play();
+            setStatus("Streaming via native HLS (proxy endpoint).");
+            setMeta([
+              `Mode: ${isPublic ? "public" : "private"}`,
+              `Proxy endpoint: ${endpoint}`,
+            ]);
           }
         } catch (err) {
           console.error(err);

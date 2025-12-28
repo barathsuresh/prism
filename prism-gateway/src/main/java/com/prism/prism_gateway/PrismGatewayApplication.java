@@ -45,8 +45,13 @@ public class PrismGatewayApplication {
 
                                 // 5. Streaming Service Route
                                 // Any URL starting with /stream goes to the Video Player service
-                                .route("stream-service", p -> p
+                                .route("stream-service-api", p -> p
                                                 .path("/api/stream/**")
+                                                .uri("lb://prism-stream"))
+
+                                // 6. Smart Proxy Route (HLS manifest/segment streaming)
+                                .route("stream-smart-proxy", p -> p
+                                                .path("/stream/**")
                                                 .uri("lb://prism-stream"))
 
                                 .build();
