@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prism Video Player</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.14/dist/hls.min.js"></script>
+    <style>
+      :root {
+        --bg: #0b1c2c;
+        --panel: #0f2438;
+        --accent: #1f9e6d;
+        --text: #e7f0f5;
+        --muted: #92a8b6;
+        --border: #1c3347;
+        --danger: #f25f5c;
+        font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+        color: var(--text);
+        background: radial-gradient(
+            circle at 20% 20%,
+            rgba(31, 158, 109, 0.2),
+            transparent 35%
+          ),
+          radial-gradient(
+            circle at 80% 0%,
+            rgba(46, 91, 173, 0.25),
+            transparent 32%
+          ),
+          #0b1c2c;
+        min-height: 100vh;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 32px;
+        display: flex;
+        justify-content: center;
+      }
+      .card {
+        width: min(1100px, 100%);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 28px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      p.lead {
+        margin: 0 0 24px;
+        color: var(--muted);
+      }
+      form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 16px;
+        align-items: end;
+      }
+      label {
+        font-size: 14px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+      input,
+      button,
+      select {
+        width: 100%;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #0b1c2c;
+        color: var(--text);
+        padding: 12px 14px;
+        font-size: 15px;
+      }
+      input:focus,
+      button:focus {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      button {
+        background: linear-gradient(135deg, var(--accent), #15c187);
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 120ms ease, box-shadow 120ms ease;
+      }
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(31, 158, 109, 0.35);
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .checkbox {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .checkbox input {
+        width: auto;
+        accent-color: var(--accent);
+      }
+      .status {
+        margin: 18px 0;
+        padding: 14px 16px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: #0c2032;
+        color: var(--muted);
+        min-height: 44px;
+      }
+      .status.negative {
+        border-color: var(--danger);
+        color: #ffd6d6;
+        background: rgba(242, 95, 92, 0.08);
+      }
+      video {
+        width: 100%;
+        margin-top: 10px;
+        background: #06101b;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .meta span {
+        padding: 6px 10px;
+        background: #0c2032;
+        border-radius: 9px;
+        border: 1px solid var(--border);
+      }
+      @media (max-width: 720px) {
+        body {
+          padding: 16px;
+        }
+        form {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Prism Stream Player</h1>
+      <p class="lead">
+        Enter an API key (if needed) and video ID. The player will call the
+        stream service, follow the presigned HLS URL, and start playback.
+      </p>
+
+      <form id="player-form">
+        <div>
+          <label for="base-url">Gateway Base URL</label>
+          <input
+            id="base-url"
+            name="base-url"
+            type="url"
+            placeholder="http://localhost:8080"
+            autocomplete="url"
+            required
+          />
+        </div>
+        <div>
+          <label for="video-id">Video ID</label>
+          <input
+            id="video-id"
+            name="video-id"
+            type="text"
+            placeholder="vid_..."
+            autocomplete="off"
+            required
+          />
+        </div>
+        <div>
+          <label for="api-key">X-API-Key (videos:read)</label>
+          <input
+            id="api-key"
+            name="api-key"
+            type="text"
+            placeholder="pk_xxx:sk_xxx"
+            autocomplete="off"
+          />
+        </div>
+        <div
+          class="row"
+          style="justify-content: space-between; gap: 12px; flex-wrap: wrap"
+        >
+          <label class="checkbox" for="public-toggle">
+            <input id="public-toggle" name="public-toggle" type="checkbox" />
+            Use public endpoint (no API key)
+          </label>
+          <button type="submit">Load & Play</button>
+        </div>
+      </form>
+
+      <div id="status" class="status">Waiting for input.</div>
+
+      <video id="player" controls playsinline></video>
+
+      <div class="meta" id="meta"></div>
+    </main>
+
+    <script>
+      const form = document.getElementById("player-form");
+      const baseInput = document.getElementById("base-url");
+      const videoIdInput = document.getElementById("video-id");
+      const apiKeyInput = document.getElementById("api-key");
+      const publicToggle = document.getElementById("public-toggle");
+      const statusEl = document.getElementById("status");
+      const metaEl = document.getElementById("meta");
+      const videoEl = document.getElementById("player");
+
+      let hlsInstance;
+
+      function setStatus(message, isError = false) {
+        statusEl.textContent = message;
+        statusEl.classList.toggle("negative", isError);
+      }
+
+      function setMeta(items = []) {
+        metaEl.innerHTML = items.map((t) => `<span>${t}</span>`).join("");
+      }
+
+      function cleanupPlayer() {
+        if (hlsInstance) {
+          hlsInstance.destroy();
+          hlsInstance = null;
+        }
+        videoEl.pause();
+        videoEl.removeAttribute("src");
+        videoEl.load();
+      }
+
+      async function resolveUrlThroughGateway(url, headers) {
+        const resp = await fetch(url, {
+          method: "GET",
+          headers,
+          redirect: "follow",
+        });
+        if (!resp.ok) {
+          throw new Error(`Gateway responded with ${resp.status}`);
+        }
+        return resp.url;
+      }
+
+      function buildEndpoint(baseUrl, videoId, isPublic) {
+        const trimmedBase = baseUrl.endsWith("/")
+          ? baseUrl.slice(0, -1)
+          : baseUrl;
+        const path = isPublic
+          ? `/api/stream/public/videos/${encodeURIComponent(videoId)}/master`
+          : `/api/stream/videos/${encodeURIComponent(videoId)}/master`;
+        return `${trimmedBase}${path}`;
+      }
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const videoId = videoIdInput.value.trim();
+        const apiKey = apiKeyInput.value.trim();
+        const isPublic = publicToggle.checked;
+        const baseUrl = baseInput.value.trim() || window.location.origin;
+
+        if (!videoId) {
+          setStatus("Please enter a video ID.", true);
+          return;
+        }
+        if (!isPublic && !apiKey) {
+          setStatus("Provide an API key or switch to public mode.", true);
+          return;
+        }
+
+        const endpoint = buildEndpoint(baseUrl, videoId, isPublic);
+        cleanupPlayer();
+        setStatus(`Requesting manifest from ${endpoint}`);
+        setMeta([`Mode: ${isPublic ? "public" : "private"}`]);
+
+        try {
+          if (Hls.isSupported()) {
+            hlsInstance = new Hls({
+              xhrSetup: (xhr) => {
+                if (!isPublic && apiKey) {
+                  xhr.setRequestHeader("X-API-Key", apiKey);
+                }
+              },
+              maxBufferLength: 30, // Buffer up to 30 seconds
+              maxMaxBufferLength: 60, // Absolute max 60 seconds
+              capLevelOnFPSDrop: true, // Reduce quality if FPS drops
+              lowLatencyMode: false, // Standard HLS, not low-latency
+              abrEwmaFastLive: 5000, // Fast adaptation on live streams (5s window)
+              abrEwmaSlowLive: 9000, // Slow adaptation for stability
+            });
+
+            hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+              setStatus(
+                `Playback error: ${data?.details || data?.type || "unknown"}`,
+                true
+              );
+            });
+
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+              setStatus("Manifest loaded. Starting playback...");
+              videoEl
+                .play()
+                .catch(() =>
+                  setStatus("Manifest loaded. Press play to start.", false)
+                );
+            });
+
+            hlsInstance.loadSource(endpoint);
+            hlsInstance.attachMedia(videoEl);
+            setMeta([
+              `Mode: ${isPublic ? "public" : "private"}`,
+              `Gateway endpoint: ${endpoint}`,
+            ]);
+          } else {
+            // Native HLS (Safari) or fallback: resolve redirect first when headers are needed
+            if (isPublic) {
+              videoEl.src = endpoint;
+              await videoEl.play();
+              setStatus("Streaming via native HLS (public). ");
+              setMeta([`Mode: public`, `Gateway endpoint: ${endpoint}`]);
+            } else {
+              const resolved = await resolveUrlThroughGateway(endpoint, {
+                "X-API-Key": apiKey,
+              });
+              videoEl.src = resolved;
+              await videoEl.play();
+              setStatus("Streaming via native HLS (resolved presigned URL).");
+              setMeta([
+                `Mode: private`,
+                `Gateway endpoint: ${endpoint}`,
+                `Presigned URL: ${resolved}`,
+              ]);
+            }
+          }
+        } catch (err) {
+          console.error(err);
+          setStatus(err.message || "Unable to start playback.", true);
+        }
+      });
+
+      // Default base URL to current origin on load
+      baseInput.value = window.location.origin;
+      publicToggle.addEventListener("change", () => {
+        apiKeyInput.disabled = publicToggle.checked;
+        if (publicToggle.checked) {
+          apiKeyInput.value = "";
+        }
+      });
+    </script>
+  </body>
+</html>

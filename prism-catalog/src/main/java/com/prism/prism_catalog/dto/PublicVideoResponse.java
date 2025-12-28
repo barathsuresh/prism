@@ -24,6 +24,8 @@ public class PublicVideoResponse {
     private List<String> tags;
     private VideoVisibility visibility;
     private Integer durationSeconds;
+    private String hlsMasterUrl;
+    private List<HlsVariantDto> hlsVariants;
     private List<String> availableQualities;
     private String thumbnailSmallUrl;
     private String thumbnailMediumUrl;

@@ -20,6 +20,11 @@ gateway:
       - path: /api/catalog/videos/public/**
         scopes: []
 
+      # Public stream endpoints (no API key required)
+      - path: /api/stream/public/**
+        method: GET
+        scopes: []
+
       # Upload progress endpoint (no API key required for SSE)
       - path: /api/upload/**/progress
         method: GET

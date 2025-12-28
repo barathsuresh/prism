@@ -69,7 +69,8 @@
             "projectName": "prism-transcoder",
             "args": "",
             "envFile": "${workspaceFolder}/.env",
-            "preLaunchTask": "Load .env"
+            "preLaunchTask": "Load .env",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=65118 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=prism-transcoder"
         },
         {
             "type": "java",
@@ -78,6 +79,17 @@
             "cwd": "${workspaceFolder}",
             "mainClass": "com.prism.prism_upload.PrismUploadApplication",
             "projectName": "prism-upload",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env",
+            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=65111 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=prism-upload"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-PrismStreamApplication<prism-stream>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.prism.prism_stream.PrismStreamApplication",
+            "projectName": "prism-stream",
             "args": "",
             "envFile": "${workspaceFolder}/.env"
         }

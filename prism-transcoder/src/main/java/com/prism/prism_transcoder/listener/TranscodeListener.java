@@ -24,6 +24,12 @@ public class TranscodeListener {
     private final CatalogClient catalogClient;
     private final ObjectMapper objectMapper;
 
+    // TODO(concurrency): Consider configuring listener concurrency
+    // (consumers/prefetch)
+    // via the container factory or properties (e.g., setConcurrentConsumers,
+    // setPrefetchCount). Keep single-consumer per instance until we benchmark
+    // FFmpeg
+    // throughput and CPU usage.
     @RabbitListener(queues = "video.transcode.queue")
     public void onMessage(@Payload byte[] payload) {
         TranscodeMessage msg;

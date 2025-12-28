@@ -14,3 +14,5 @@ hs_err_pid*
 
 # Environment files
 .env
+DUPLICATE_UPLOAD_PREVENTION.md
+MIGRATION_SUMMARY.md

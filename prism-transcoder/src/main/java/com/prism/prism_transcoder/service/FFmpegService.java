@@ -11,6 +11,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.prism.prism_transcoder.config.FFmpegConfig.FFmpegProperties;
+import com.prism.prism_transcoder.config.FFmpegConfig.FFmpegProperties.Variant;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -88,18 +89,38 @@ public class FFmpegService {
     }
 
     public void transcodeMultiVariantHls(Path inputFile, Path outputDir) throws IOException, InterruptedException {
-        int e360 = transcodeVariantHls(inputFile, outputDir, "360p", 360, "800k", "96k");
-        int e480 = transcodeVariantHls(inputFile, outputDir, "480p", 480, "1400k", "128k");
-        int e720 = transcodeVariantHls(inputFile, outputDir, "720p", 720, "2800k", "128k");
-        int e1080 = transcodeVariantHls(inputFile, outputDir, "1080p", 1080, "5000k", "192k");
-        if (e360 != 0 || e480 != 0 || e720 != 0 || e1080 != 0) {
-            throw new IllegalStateException("FFmpeg failed for one or more variants: " + e360 + "," + e480 + "," + e720
-                    + "," + e1080);
+        java.util.List<Variant> variants = props.getHls() != null ? props.getHls().getVariants() : null;
+        if (variants == null || variants.isEmpty()) {
+            // Defaults
+            int e360 = transcodeVariantHls(inputFile, outputDir, "360p", 360, "800k", "96k");
+            int e480 = transcodeVariantHls(inputFile, outputDir, "480p", 480, "1400k", "128k");
+            int e720 = transcodeVariantHls(inputFile, outputDir, "720p", 720, "2800k", "128k");
+            int e1080 = transcodeVariantHls(inputFile, outputDir, "1080p", 1080, "5000k", "192k");
+            if (e360 != 0 || e480 != 0 || e720 != 0 || e1080 != 0) {
+                throw new IllegalStateException(
+                        "FFmpeg failed for one or more variants: " + e360 + "," + e480 + "," + e720
+                                + "," + e1080);
+            }
+            writeMasterPlaylistDefault(outputDir);
+            return;
         }
-        writeMasterPlaylist(outputDir);
+
+        List<Integer> exits = new ArrayList<>();
+        for (Variant v : variants) {
+            String quality = v.getQuality();
+            int height = v.getHeight() != null ? v.getHeight() : deriveHeightFromQuality(quality);
+            String vBitrate = v.getVideoBitrate() != null ? v.getVideoBitrate() : defaultVideoBitrate(height);
+            String aBitrate = v.getAudioBitrate() != null ? v.getAudioBitrate() : defaultAudioBitrate(height);
+            int exit = transcodeVariantHls(inputFile, outputDir, quality, height, vBitrate, aBitrate);
+            exits.add(exit);
+        }
+        if (exits.stream().anyMatch(code -> code != 0)) {
+            throw new IllegalStateException("FFmpeg failed for one or more variants: " + exits);
+        }
+        writeMasterPlaylistFromVariants(outputDir, variants);
     }
 
-    public void writeMasterPlaylist(Path outputDir) throws IOException {
+    private void writeMasterPlaylistDefault(Path outputDir) throws IOException {
         Path master = outputDir.resolve("master.m3u8");
         List<String> lines = List.of(
                 "#EXTM3U",
@@ -113,6 +134,76 @@ public class FFmpegService {
                 "1080p/playlist.m3u8");
         Files.createDirectories(outputDir);
         Files.write(master, lines);
+    }
+
+    private void writeMasterPlaylistFromVariants(Path outputDir, List<Variant> variants) throws IOException {
+        Path master = outputDir.resolve("master.m3u8");
+        List<String> lines = new ArrayList<>();
+        lines.add("#EXTM3U");
+        for (Variant v : variants) {
+            int height = v.getHeight() != null ? v.getHeight() : deriveHeightFromQuality(v.getQuality());
+            int width = v.getWidth() != null ? v.getWidth() : deriveWidthFromHeight(height);
+            int bandwidth = v.getBandwidthKbps() != null ? v.getBandwidthKbps() * 1000
+                    : bitrateToBps(v.getVideoBitrate());
+            lines.add("#EXT-X-STREAM-INF:BANDWIDTH=" + bandwidth + ",RESOLUTION=" + width + "x" + height);
+            lines.add(v.getQuality() + "/playlist.m3u8");
+        }
+        Files.createDirectories(outputDir);
+        Files.write(master, lines);
+    }
+
+    private int deriveHeightFromQuality(String quality) {
+        if (quality == null)
+            return 360;
+        try {
+            return Integer.parseInt(quality.replaceAll("[^0-9]", ""));
+        } catch (Exception ignore) {
+            return 360;
+        }
+    }
+
+    private int deriveWidthFromHeight(int height) {
+        // Assume 16:9, round to even
+        int w = Math.round(height * 16f / 9f);
+        return (w % 2 == 0) ? w : (w + 1);
+    }
+
+    private String defaultVideoBitrate(int height) {
+        if (height <= 144)
+            return "200k";
+        if (height <= 240)
+            return "400k";
+        if (height <= 360)
+            return "800k";
+        if (height <= 480)
+            return "1400k";
+        if (height <= 720)
+            return "2800k";
+        return "5000k";
+    }
+
+    private String defaultAudioBitrate(int height) {
+        if (height <= 240)
+            return "64k";
+        if (height <= 720)
+            return "128k";
+        return "192k";
+    }
+
+    private int bitrateToBps(String vBitrate) {
+        if (vBitrate == null)
+            return 800000;
+        String s = vBitrate.trim().toLowerCase();
+        try {
+            if (s.endsWith("k")) {
+                return Integer.parseInt(s.substring(0, s.length() - 1)) * 1000;
+            } else if (s.endsWith("m")) {
+                return Integer.parseInt(s.substring(0, s.length() - 1)) * 1000_000;
+            }
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            return 800000;
+        }
     }
 
     public void generateThumbnails(Path inputFile, Path outputDir) throws IOException, InterruptedException {

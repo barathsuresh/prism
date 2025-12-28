@@ -6,7 +6,10 @@ server:
 
 # Custom MinIO Config
 minio:
-  url: http://localhost:9000
+  endpoint: http://localhost:9000
   access-key: minioadmin
   secret-key: minioadmin
-  bucket-name: prism-videos
+  bucket: prism-videos
+  region: us-east-1
+  max-file-size: 5368709120 # 5GB
+  presigned-url-expiration-minutes: 720 # 12 hours

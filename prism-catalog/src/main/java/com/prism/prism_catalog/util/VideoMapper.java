@@ -94,6 +94,11 @@ public class VideoMapper {
                 .tags(video.getTags())
                 .visibility(video.getVisibility())
                 .durationSeconds(video.getDurationSeconds())
+                .hlsMasterUrl(video.getHlsMasterUrl())
+                .hlsVariants(video.getHlsVariants() != null ? video.getHlsVariants().stream()
+                        .map(this::toHlsVariantDto)
+                        .toList()
+                        : null)
                 .availableQualities(extractQualities(video.getHlsVariants()))
                 .thumbnailSmallUrl(video.getThumbnails() != null ? video.getThumbnails().getSmallUrl() : null)
                 .thumbnailMediumUrl(video.getThumbnails() != null ? video.getThumbnails().getMediumUrl() : null)
@@ -112,6 +117,17 @@ public class VideoMapper {
                 .quality(dto.getQuality())
                 .bitrateKbps(dto.getBitrateKbps())
                 .url(dto.getUrl())
+                .build();
+    }
+
+    /**
+     * Map Video.HlsVariant to HlsVariantDto
+     */
+    public HlsVariantDto toHlsVariantDto(Video.HlsVariant variant) {
+        return HlsVariantDto.builder()
+                .quality(variant.getQuality())
+                .bitrateKbps(variant.getBitrateKbps())
+                .url(variant.getUrl())
                 .build();
     }
 
