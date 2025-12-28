@@ -1,3 +1,6 @@
+logging:
+  level:
+    com.prism: DEBUG
 example:
   message: "Hello from the Config Server!"
 

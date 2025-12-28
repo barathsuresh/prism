@@ -20,16 +20,40 @@ import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+/**
+ * Storage Service - Handles file uploads to MinIO
+ * 
+ * Flow:
+ * 1. Receive file from HTTP request (FilePart - reactive stream of bytes)
+ * 2. Write file to temporary local disk (to get file size)
+ * 3. Upload file from temp location to MinIO (object storage)
+ * 4. Delete temporary file
+ * 5. Return object key (path in MinIO)
+ * 
+ * Why temp file?
+ * - Multipart uploads don't include Content-Length header
+ * - We need to know file size before uploading to MinIO
+ * - Also allows progress tracking
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class StorageService {
 
+    // MinIO client for async uploads (non-blocking)
     private final S3AsyncClient s3AsyncClient;
+
+    // MinIO configuration (bucket name, endpoint, etc.)
     private final MinIOConfig.MinIOProperties minioProperties;
 
     /**
      * Upload file to MinIO with progress tracking
+     * 
+     * @param videoId      - unique video identifier
+     * @param appId        - application/tenant identifier for multi-tenancy
+     * @param filePart     - reactive stream of file bytes from HTTP upload
+     * @param progressSink - reactive sink to emit progress events for SSE
+     * @return Mono<String> - object key (path) in MinIO where file is stored
      */
     public Mono<String> uploadFile(String videoId, String appId, FilePart filePart,
             Sinks.Many<UploadProgressEvent> progressSink) {
@@ -99,8 +123,20 @@ public class StorageService {
     }
 
     /**
-     * Generate object key for MinIO storage
-     * Format: {appId}/{videoId}/source/{filename}
+     * Generate object key (file path) for MinIO storage
+     * 
+     * Object Key Structure:
+     * {appId}/{videoId}/source/{filename}
+     * 
+     * Example: "app123/video456/source/movie.mp4"
+     * 
+     * Why this structure?
+     * - appId: Multi-tenancy, each app has its own folder
+     * - videoId: Each video has its own folder for all related files
+     * - source/: Stores original uploaded file
+     * - Later: hls/, thumbnails/ will be added by transcoder
+     * 
+     * Full path in MinIO: s3://prism-videos/app123/video456/source/movie.mp4
      */
     public String generateObjectKey(String appId, String videoId, String filename) {
         return String.format("%s/%s/source/%s", appId, videoId, filename);
@@ -108,6 +144,9 @@ public class StorageService {
 
     /**
      * Get storage base path for video
+     * 
+     * Returns: "app123/video456"
+     * Used by transcoder to know where to save HLS files and thumbnails
      */
     public String getStorageBasePath(String appId, String videoId) {
         return String.format("%s/%s", appId, videoId);

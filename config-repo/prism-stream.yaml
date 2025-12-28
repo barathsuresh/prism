@@ -1,6 +1,9 @@
+logging:
+  level:
+    com.prism: DEBUG
 server:
   port: 8085 # Runs on 8085
-  
+
 # Custom MinIO Config
 minio:
   url: http://localhost:9000

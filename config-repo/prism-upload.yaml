@@ -1,3 +1,6 @@
+logging:
+  level:
+    com.prism: DEBUG
 server:
   port: 8083 # Runs on port 8083
 

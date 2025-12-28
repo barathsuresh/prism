@@ -4,7 +4,7 @@ server:
 spring:
   application:
     name: prism-transcoder
-  
+
   mongodb:
     uri: mongodb://localhost:27017/prism-transcoder-db
   rabbitmq:
@@ -15,7 +15,7 @@ spring:
 
 # Custom Config
 transcoder:
-  ffmpeg-path: ${user.dir}/bin/ffmpeg.exe
+  ffmpeg-path: ffmpeg
   temp-dir: ${java.io.tmpdir}/prism-transcode
 
 minio:
@@ -23,3 +23,7 @@ minio:
   access-key: minioadmin
   secret-key: minioadmin
   bucket-name: prism-videos
+
+logging:
+  level:
+    com.prism: DEBUG

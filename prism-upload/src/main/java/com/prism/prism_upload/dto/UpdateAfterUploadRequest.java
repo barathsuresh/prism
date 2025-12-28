@@ -14,5 +14,9 @@ public class UpdateAfterUploadRequest {
     private String sourceFileName;
     private Long sourceFileSizeBytes;
     private String sourceContentType;
-    private String status;
+    private VideoStatus status;
+
+    public enum VideoStatus {
+        PENDING, UPLOADING, UPLOADED, PROCESSING, READY, FAILED, DELETED
+    }
 }

@@ -1,3 +1,6 @@
+logging:
+  level:
+    com.prism: DEBUG
 server:
   port: 8081
 
