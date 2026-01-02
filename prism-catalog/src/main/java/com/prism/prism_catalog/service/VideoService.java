@@ -41,19 +41,20 @@ public class VideoService {
      */
     @Transactional
     public VideoResponse createVideo(CreateVideoRequest request, String appId, String ownerUserName) {
-        log.info("Creating video for appId: {}, owner: {}, title: {}", appId, ownerUserName, request.getTitle());
+        log.info("[VIDEO-SERVICE] Creating video - appId: {}, owner: {}, title: {}", appId, ownerUserName,
+                request.getTitle());
 
         Video video = videoMapper.toEntity(request, appId, ownerUserName);
 
         // Check for duplicate slug within the same app
         // if (videoRepository.findBySlugAndAppId(video.getSlug(), appId).isPresent()) {
-        //     throw new IllegalArgumentException(
-        //             "A video with slug '" + video.getSlug() + "' already exists for this app");
+        // throw new IllegalArgumentException(
+        // "A video with slug '" + video.getSlug() + "' already exists for this app");
         // }
 
         Video saved = videoRepository.save(video);
 
-        log.info("Created video with id: {}", saved.getId());
+        log.info("[VIDEO-SERVICE] Video created - videoId: {}, appId: {}", saved.getId(), appId);
         return videoMapper.toResponse(saved);
     }
 
@@ -106,7 +107,10 @@ public class VideoService {
      */
     public VideoResponse getVideoForApp(String appId, String videoId) {
         Video video = videoRepository.findByIdAndAppId(videoId, appId)
-                .orElseThrow(() -> new ResourceNotFoundException("Video not found or access denied"));
+                .orElseThrow(() -> {
+                    log.warn("[VIDEO-SERVICE] Video not found - videoId: {}, appId: {}", videoId, appId);
+                    return new ResourceNotFoundException("Video not found or access denied");
+                });
 
         if (video.getStatus() == VideoStatus.DELETED) {
             throw new ResourceNotFoundException("Video not found");
@@ -120,7 +124,10 @@ public class VideoService {
      */
     public VideoResponse getVideoBySlugForApp(String appId, String slug) {
         Video video = videoRepository.findBySlugAndAppId(slug, appId)
-                .orElseThrow(() -> new ResourceNotFoundException("Video not found or access denied"));
+                .orElseThrow(() -> {
+                    log.warn("[VIDEO-SERVICE] Video not found - slug: {}, appId: {}", slug, appId);
+                    return new ResourceNotFoundException("Video not found or access denied");
+                });
 
         if (video.getStatus() == VideoStatus.DELETED) {
             throw new ResourceNotFoundException("Video not found");
@@ -161,7 +168,7 @@ public class VideoService {
         video.setUpdatedAt(Instant.now());
         Video updated = videoRepository.save(video);
 
-        log.info("Updated video: {}", videoId);
+        log.info("[VIDEO-SERVICE] Video updated - videoId: {}, appId: {}", videoId, appId);
         return videoMapper.toResponse(updated);
     }
 
@@ -182,7 +189,7 @@ public class VideoService {
         video.setUpdatedAt(Instant.now());
         videoRepository.save(video);
 
-        log.info("Soft deleted video: {}", videoId);
+        log.info("[VIDEO-SERVICE] Video deleted - videoId: {}, appId: {}", videoId, appId);
     }
 
     /**
@@ -227,7 +234,10 @@ public class VideoService {
      */
     public PublicVideoResponse getPublicVideo(String videoId) {
         Video video = videoRepository.findById(videoId)
-                .orElseThrow(() -> new ResourceNotFoundException("Video not found"));
+                .orElseThrow(() -> {
+                    log.warn("[VIDEO-SERVICE] Public video not found - videoId: {}", videoId);
+                    return new ResourceNotFoundException("Video not found");
+                });
 
         if (video.getVisibility() != VideoVisibility.PUBLIC || video.getStatus() != VideoStatus.READY) {
             throw new ResourceNotFoundException("Video not found or not public");
@@ -254,7 +264,7 @@ public class VideoService {
         video.setUpdatedAt(Instant.now());
         videoRepository.save(video);
 
-        log.info("Updated video {} after upload", videoId);
+        log.info("[VIDEO-SERVICE] Video updated after upload - videoId: {}, status: {}", videoId, request.getStatus());
     }
 
     /**
@@ -284,13 +294,14 @@ public class VideoService {
                 video.setDurationSeconds(request.getDurationSeconds());
             }
         } else if (request.getStatus() == VideoStatus.FAILED) {
-            log.warn("Video {} processing failed: {}", videoId, request.getErrorMessage());
+            log.warn("[VIDEO-SERVICE] Video processing failed - videoId: {}, error: {}", videoId,
+                    request.getErrorMessage());
         }
 
         video.setUpdatedAt(Instant.now());
         videoRepository.save(video);
 
-        log.info("Updated video {} streams with status: {}", videoId, request.getStatus());
+        log.info("[VIDEO-SERVICE] Video streams updated - videoId: {}, status: {}", videoId, request.getStatus());
     }
 
     /**

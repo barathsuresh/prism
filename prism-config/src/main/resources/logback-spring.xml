@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true">
+    <springProperty name="appName" source="spring.application.name" defaultValue="prism-config" />
+    <springProperty name="activeProfile" source="spring.profiles.active" defaultValue="local" />
+
+    <property name="lokiUrl" value="${LOKI_URL:-http://localhost:3100/loki/api/v1/push}" />
+    <property name="instance" value="${HOSTNAME:-local}" />
+    <property name="logLevel" value="${LOG_LEVEL:-INFO}" />
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%thread] %logger{36} -
+                %msg%n%ex</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <http>
+            <url>${lokiUrl}</url>
+            <connectionTimeoutMs>5000</connectionTimeoutMs>
+            <readTimeoutMs>10000</readTimeoutMs>
+        </http>
+        <labels>
+            app = ${appName}
+            instance = ${instance}
+            level = %level
+            class = %logger{36}
+        </labels>
+        <format>
+            <pattern>
+                <label>
+                    <pattern>
+                        level=%level, app=${appName}, thread=%thread, logger=%logger
+                    </pattern>
+                </label>
+                <logMessage>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%thread] %logger{36} -
+                    %msg%n%ex</logMessage>
+            </pattern>
+        </format>
+    </appender>
+
+    <appender name="LOKI_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>8192</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="LOKI" />
+    </appender>
+
+    <root level="${logLevel}">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="LOKI_ASYNC" />
+    </root>
+</configuration>

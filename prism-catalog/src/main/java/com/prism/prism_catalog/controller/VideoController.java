@@ -61,6 +61,8 @@ public class VideoController {
             @RequestHeader(value = "X-Owner-User", required = false, defaultValue = "unknown") String ownerUserName) {
 
         VideoResponse response = videoService.createVideo(request, appId, ownerUserName);
+        log.info("[VIDEO] Video created - videoId: {}, appId: {}, title: {}", response.getId(), appId,
+                request.getTitle());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -86,6 +88,7 @@ public class VideoController {
         PagedResponse<VideoResponse> response = videoService.listVideosForApp(
                 appId, status, category, visibility, tag, search, fromDate, toDate,
                 page, size, sortBy, sortDir);
+        log.debug("[VIDEO] Listed videos - appId: {}, size: {}, page: {}", appId, response.getSize(), page);
         return ResponseEntity.ok(response);
     }
 
@@ -126,6 +129,7 @@ public class VideoController {
             @Valid @RequestBody UpdateVideoRequest request) {
 
         VideoResponse response = videoService.updateVideoForApp(appId, videoId, request);
+        log.info("[VIDEO] Video updated - videoId: {}, appId: {}", videoId, appId);
         return ResponseEntity.ok(response);
     }
 
@@ -139,6 +143,7 @@ public class VideoController {
             @PathVariable String videoId) {
 
         videoService.deleteVideoForApp(appId, videoId);
+        log.info("[VIDEO] Video deleted - videoId: {}, appId: {}", videoId, appId);
         return ResponseEntity.noContent().build();
     }
 
@@ -162,6 +167,7 @@ public class VideoController {
 
         PagedResponse<PublicVideoResponse> response = videoService.listPublicVideos(
                 category, tag, search, fromDate, toDate, page, size, sortBy, sortDir);
+        log.debug("[VIDEO] Listed public videos - size: {}, page: {}", response.getSize(), page);
         return ResponseEntity.ok(response);
     }
 
@@ -187,6 +193,7 @@ public class VideoController {
             @Valid @RequestBody UpdateAfterUploadRequest request) {
 
         videoService.updateAfterUpload(videoId, request);
+        log.info("[VIDEO] Video updated after upload - videoId: {}, status: {}", videoId, request.getStatus());
         return ResponseEntity.noContent().build();
     }
 
@@ -200,6 +207,7 @@ public class VideoController {
             @Valid @RequestBody UpdateStreamsRequest request) {
 
         videoService.updateStreams(videoId, request);
+        log.info("[VIDEO] Video streams updated - videoId: {}", videoId);
         return ResponseEntity.noContent().build();
     }
 }

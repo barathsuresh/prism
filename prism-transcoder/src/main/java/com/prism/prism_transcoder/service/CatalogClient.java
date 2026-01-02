@@ -29,7 +29,7 @@ public class CatalogClient {
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(Void.class)
-                .doOnSuccess(v -> log.info("Catalog updated for videoId={}", videoId))
-                .doOnError(e -> log.error("Failed to update catalog for videoId={}", videoId, e));
+                .doOnSuccess(v -> log.info("[TRANSCODER] Catalog updated for videoId={}", videoId))
+                .doOnError(e -> log.error("[TRANSCODER] Failed to update catalog for videoId={}", videoId, e));
     }
 }

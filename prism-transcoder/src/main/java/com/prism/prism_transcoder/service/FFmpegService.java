@@ -32,8 +32,8 @@ public class FFmpegService {
                 binPath = Path.of(System.getProperty("user.dir")).resolve(binPath).normalize();
             }
             if (Files.notExists(binPath)) {
-                throw new IllegalStateException("Cannot find file at '" + binPath.toString()
-                        + "'. This usually indicates a missing or moved file.");
+                throw new IllegalStateException("[TRANSCODER] Cannot find FFmpeg at '" + binPath.toString()
+                        + "'");
             }
             // Use the resolved absolute path
             bin = binPath.toString();
@@ -49,12 +49,15 @@ public class FFmpegService {
         }
         int exit = run(cmd, workDirForVerify);
         if (exit != 0) {
-            throw new IllegalStateException("ffmpeg not available at '" + bin + "'. Exit code: " + exit);
+            throw new IllegalStateException("[TRANSCODER] FFmpeg not available at '" + bin + "'. Exit code: " + exit);
         }
+        log.info("[TRANSCODER] FFmpeg verified successfully");
     }
 
     public int transcodeVariantHls(Path inputFile, Path outputDir, String quality, int height, String vBitrate,
             String aBitrate) throws IOException, InterruptedException {
+        log.info("[TRANSCODER] Transcoding variant - quality: {}, height: {}, vBitrate: {}, aBitrate: {}", quality,
+                height, vBitrate, aBitrate);
         Files.createDirectories(outputDir);
         Path variantDir = outputDir.resolve(quality);
         Files.createDirectories(variantDir);
@@ -89,6 +92,7 @@ public class FFmpegService {
     }
 
     public void transcodeMultiVariantHls(Path inputFile, Path outputDir) throws IOException, InterruptedException {
+        log.info("[TRANSCODER] Starting multi-variant HLS transcode - inputFile: {}", inputFile.getFileName());
         java.util.List<Variant> variants = props.getHls() != null ? props.getHls().getVariants() : null;
         if (variants == null || variants.isEmpty()) {
             // Defaults
@@ -98,7 +102,7 @@ public class FFmpegService {
             int e1080 = transcodeVariantHls(inputFile, outputDir, "1080p", 1080, "5000k", "192k");
             if (e360 != 0 || e480 != 0 || e720 != 0 || e1080 != 0) {
                 throw new IllegalStateException(
-                        "FFmpeg failed for one or more variants: " + e360 + "," + e480 + "," + e720
+                        "[TRANSCODER] FFmpeg failed for variants: " + e360 + "," + e480 + "," + e720
                                 + "," + e1080);
             }
             writeMasterPlaylistDefault(outputDir);
@@ -115,7 +119,7 @@ public class FFmpegService {
             exits.add(exit);
         }
         if (exits.stream().anyMatch(code -> code != 0)) {
-            throw new IllegalStateException("FFmpeg failed for one or more variants: " + exits);
+            throw new IllegalStateException("[TRANSCODER] FFmpeg failed for variants: " + exits);
         }
         writeMasterPlaylistFromVariants(outputDir, variants);
     }
@@ -207,6 +211,7 @@ public class FFmpegService {
     }
 
     public void generateThumbnails(Path inputFile, Path outputDir) throws IOException, InterruptedException {
+        log.info("[TRANSCODER] Generating thumbnails - inputFile: {}", inputFile.getFileName());
         Files.createDirectories(outputDir);
         // Generate thumbnails at 5 seconds
         run(new ArrayList<>(List.of(getBinary(), "-y", "-ss", "00:00:05", "-i",
@@ -257,7 +262,7 @@ public class FFmpegService {
         if (workDir != null)
             pb.directory(workDir.toFile());
         pb.redirectErrorStream(true);
-        log.info("Running FFmpeg: {}", String.join(" ", command));
+        log.debug("[TRANSCODER] Executing: {}", String.join(" ", command));
         Process p = pb.start();
         List<String> output = new ArrayList<>();
         try (BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
@@ -269,9 +274,9 @@ public class FFmpegService {
         }
         int exit = p.waitFor();
         if (exit != 0) {
-            log.error("FFmpeg exited with code {}. Output:\n{}", exit, String.join("\n", output));
+            log.error("[TRANSCODER] FFmpeg exited with code {}. Output: {}", exit, String.join("\n", output));
         } else {
-            log.info("FFmpeg exited with code {}", exit);
+            log.debug("[TRANSCODER] FFmpeg exited successfully");
         }
         return exit;
     }
@@ -281,7 +286,7 @@ public class FFmpegService {
                 "default=noprint_wrappers=1:nokey=1", inputFile.toAbsolutePath().toString());
         ProcessBuilder pb = new ProcessBuilder(cmd);
         pb.redirectErrorStream(true);
-        log.info("Running ffprobe: {}", String.join(" ", cmd));
+        log.debug("[TRANSCODER] Probing duration - inputFile: {}", inputFile.getFileName());
         Process p = pb.start();
         String value = null;
         try (BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
@@ -289,14 +294,15 @@ public class FFmpegService {
         }
         int exit = p.waitFor();
         if (exit != 0 || value == null || value.isBlank()) {
-            log.warn("ffprobe failed or returned no duration; exit={}", exit);
+            log.warn("[TRANSCODER] ffprobe failed - exit: {}", exit);
             return null;
         }
         try {
             double seconds = Double.parseDouble(value.trim());
+            log.debug("[TRANSCODER] Video duration: {}s", (int) Math.round(seconds));
             return (int) Math.round(seconds);
         } catch (NumberFormatException nfe) {
-            log.warn("Unable to parse ffprobe duration: {}", value);
+            log.warn("[TRANSCODER] Unable to parse duration: {}", value);
             return null;
         }
     }

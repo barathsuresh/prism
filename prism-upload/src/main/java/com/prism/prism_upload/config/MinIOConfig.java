@@ -121,21 +121,11 @@ public class MinIOConfig {
      */
     @Data
     public static class MinIOProperties {
-        /** MinIO server URL - where MinIO is running */
         private String endpoint = "http://localhost:9000";
-
-        /** Access key - like username for MinIO authentication */
         private String accessKey;
-
-        /** Secret key - like password for MinIO authentication */
         private String secretKey;
-
-        /** Bucket name - container for all video files */
         private String bucket = "prism-videos";
-
-        /** Region - required by S3 API, doesn't affect MinIO */
         private String region = "us-east-1";
-
         /** Max file size allowed for uploads (5GB) */
         private long maxFileSize = 5368709120L; // 5GB default
     }

@@ -54,8 +54,10 @@ public class JwtProvider {
         String bearerToken = request.getHeader("Authorization");
         log.debug("Authorization Header: {}", bearerToken);
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            log.debug("[JWT] JWT token extracted from Authorization header - path: {}", request.getRequestURI());
             return bearerToken.substring(7);
         }
+        log.trace("[JWT] No Authorization header found or invalid format - path: {}", request.getRequestURI());
         return null;
     }
 
@@ -70,13 +72,22 @@ public class JwtProvider {
         String roles = userDetails.getAuthorities().stream()
                 .map(auth -> auth.getAuthority())
                 .collect(Collectors.joining(","));
-        return Jwts.builder()
+
+        log.debug("[JWT] Generating JWT token - userId: {}, username: {}, roles: {}",
+                userDetails.getId(), username, roles);
+
+        String token = Jwts.builder()
                 .subject(username) // Store username in token
                 .claim("roles", roles) // Add roles as claim
                 .issuedAt(new Date()) // Current timestamp
                 .expiration(new Date((new Date()).getTime() + jwtProperties.getExpiration().toMillis())) // Expiry time
                 .signWith(getSigningKey()) // Sign with secret key
                 .compact();
+
+        log.debug("[JWT] JWT token generated successfully - userId: {}, username: {}, expiresIn: {}ms",
+                userDetails.getId(), username, jwtProperties.getExpiration().toMillis());
+
+        return token;
     }
 
     /**
@@ -86,10 +97,18 @@ public class JwtProvider {
      * @return
      */
     public String getUserNameFromJwtToken(String token) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build().parseSignedClaims(token)
-                .getPayload().getSubject(); // Returns username
+        log.debug("[JWT] Extracting username from JWT token");
+        try {
+            String username = Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build().parseSignedClaims(token)
+                    .getPayload().getSubject(); // Returns username
+            log.debug("[JWT] Username extracted successfully - username: {}", username);
+            return username;
+        } catch (Exception e) {
+            log.warn("[JWT] Failed to extract username from token - error: {}", e.getMessage());
+            throw e;
+        }
     }
 
     /**
@@ -101,15 +120,19 @@ public class JwtProvider {
     public boolean validateJwtToken(String authToken) {
         try {
             Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(authToken);
+            log.debug("[JWT] JWT token validation successful");
             return true; // Token is valid
         } catch (MalformedJwtException e) {
-            log.error("Invalid JWT token: {}", e.getMessage());
+            log.warn("[JWT] JWT token validation failed - error: MalformedJwtException, message: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
-            log.error("JWT token is expired: {}", e.getMessage());
+            log.warn("[JWT] JWT token validation failed - error: ExpiredJwtException, message: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {
-            log.error("JWT token is unsupported: {}", e.getMessage());
+            log.warn("[JWT] JWT token validation failed - error: UnsupportedJwtException, message: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
-            log.error("JWT claims string is empty: {}", e.getMessage());
+            log.warn("[JWT] JWT token validation failed - error: IllegalArgumentException, message: {}",
+                    e.getMessage());
+        } catch (Exception e) {
+            log.error("[JWT] Unexpected error during JWT validation - error: {}", e.getMessage(), e);
         }
         return false; // Token validation failed
     }

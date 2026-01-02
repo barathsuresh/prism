@@ -41,7 +41,7 @@ public class SmartProxyController {
             @RequestHeader("X-App-Id") String appId,
             @PathVariable String videoId) {
 
-        log.info("Private master request: videoId={}, appId={}", videoId, appId);
+        log.info("[STREAM] Private master request - videoId: {}, appId: {}", videoId, appId);
         return catalogService.getVideo(appId, videoId)
                 .flatMap(v -> {
                     String key = s3Service.extractObjectKeyFromUrl(v.getHlsMasterUrl(), minioConfig.getBucket());
@@ -66,7 +66,8 @@ public class SmartProxyController {
             @PathVariable String videoId,
             @PathVariable String quality) {
 
-        log.info("Private variant playlist request: videoId={}, quality={}, appId={}", videoId, quality, appId);
+        log.info("[STREAM] Private variant playlist request - videoId: {}, quality: {}, appId: {}", videoId, quality,
+                appId);
         return catalogService.getVideo(appId, videoId)
                 .flatMap(v -> {
                     String masterKey = s3Service.extractObjectKeyFromUrl(v.getHlsMasterUrl(), minioConfig.getBucket());
@@ -94,7 +95,8 @@ public class SmartProxyController {
             @PathVariable String quality,
             @PathVariable String segment) {
 
-        log.info("Private segment request: videoId={}, quality={}, segment={}, appId={}", videoId, quality, segment,
+        log.info("[STREAM] Private segment request - videoId: {}, quality: {}, segment: {}, appId: {}", videoId,
+                quality, segment,
                 appId);
         return catalogService.getVideo(appId, videoId)
                 .flatMap(v -> {
@@ -178,7 +180,7 @@ public class SmartProxyController {
      */
     @GetMapping(value = "/public/{videoId}/master.m3u8", produces = "application/vnd.apple.mpegurl")
     public Mono<ResponseEntity<String>> proxyPublicMaster(@PathVariable String videoId) {
-        log.info("Public master request: videoId={}", videoId);
+        log.info("[STREAM] Public master request - videoId: {}", videoId);
         return catalogService.getPublicVideo(videoId)
                 .flatMap(v -> {
                     String key = s3Service.extractObjectKeyFromUrl(v.getHlsMasterUrl(), minioConfig.getBucket());
@@ -201,7 +203,7 @@ public class SmartProxyController {
             @PathVariable String videoId,
             @PathVariable String quality) {
 
-        log.info("Public variant playlist request: videoId={}, quality={}", videoId, quality);
+        log.info("[STREAM] Public variant playlist request - videoId: {}, quality: {}", videoId, quality);
         return catalogService.getPublicVideo(videoId)
                 .flatMap(v -> {
                     String masterKey = s3Service.extractObjectKeyFromUrl(v.getHlsMasterUrl(), minioConfig.getBucket());
@@ -227,7 +229,7 @@ public class SmartProxyController {
             @PathVariable String quality,
             @PathVariable String segment) {
 
-        log.info("Public segment request: videoId={}, quality={}, segment={}", videoId, quality, segment);
+        log.info("[STREAM] Public segment request - videoId: {}, quality: {}, segment: {}", videoId, quality, segment);
         return catalogService.getPublicVideo(videoId)
                 .flatMap(v -> {
                     String masterKey = s3Service.extractObjectKeyFromUrl(v.getHlsMasterUrl(), minioConfig.getBucket());

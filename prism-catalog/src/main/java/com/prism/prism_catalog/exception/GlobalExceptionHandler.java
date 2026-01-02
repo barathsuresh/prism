@@ -23,7 +23,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(
             ResourceNotFoundException ex, WebRequest request) {
-        log.warn("Resource not found: {}", ex.getMessage());
+        log.warn("[EXCEPTION] Resource not found - message: {}, path: {}", ex.getMessage(),
+                request.getDescription(false));
         ErrorResponse error = ErrorResponse.builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.NOT_FOUND.value())
@@ -44,7 +45,7 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
 
-        log.warn("Validation failed: {}", errors);
+        log.warn("[EXCEPTION] Validation failed - errors: {}, path: {}", errors, request.getDescription(false));
         ErrorResponse error = ErrorResponse.builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.BAD_REQUEST.value())
@@ -59,7 +60,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MissingRequestHeaderException.class)
     public ResponseEntity<ErrorResponse> handleMissingHeader(
             MissingRequestHeaderException ex, WebRequest request) {
-        log.warn("Missing required header: {}", ex.getHeaderName());
+        log.warn("[EXCEPTION] Missing header - header: {}, path: {}", ex.getHeaderName(),
+                request.getDescription(false));
         ErrorResponse error = ErrorResponse.builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.BAD_REQUEST.value())
@@ -73,7 +75,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(
             IllegalArgumentException ex, WebRequest request) {
-        log.warn("Invalid argument: {}", ex.getMessage());
+        log.warn("[EXCEPTION] Illegal argument - message: {}, path: {}", ex.getMessage(),
+                request.getDescription(false));
         ErrorResponse error = ErrorResponse.builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.BAD_REQUEST.value())
@@ -87,7 +90,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateKeyException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateKey(
             DuplicateKeyException ex, WebRequest request) {
-        log.warn("Duplicate key error: {}", ex.getMessage());
+        log.warn("[EXCEPTION] Duplicate key - path: {}", request.getDescription(false));
 
         // Extract a user-friendly message from the MongoDB error
         String message = "A resource with the same unique identifier already exists";
@@ -108,12 +111,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex, WebRequest request) {
-        log.error("Unexpected error", ex);
+        log.error("[EXCEPTION] Unexpected error - path: {}", request.getDescription(false), ex);
         ErrorResponse error = ErrorResponse.builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error("Internal Server Error")
-                .message("An unexpected error occurred")
+                .message(ex.getMessage())
                 .path(request.getDescription(false).replace("uri=", ""))
                 .build();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);

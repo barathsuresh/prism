@@ -1,6 +1,9 @@
 logging:
   level:
     com.prism: DEBUG
+spring:
+  application:
+    name: prism-gateway
 example:
   message: "Hello from the Config Server!"
 
@@ -68,3 +71,19 @@ gateway:
       - path: /stream/**
         method: GET
         scopes: ["videos:read"]
+
+management:
+  tracing:
+    sampling:
+      probability: 1
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  observations:
+    key-values:
+      application: ${spring.application.name}

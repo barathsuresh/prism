@@ -59,7 +59,8 @@ public class StorageService {
             Sinks.Many<UploadProgressEvent> progressSink) {
 
         String objectKey = generateObjectKey(appId, videoId, filePart.filename());
-        log.info("Uploading file to MinIO: bucket={}, key={}", minioProperties.getBucket(), objectKey);
+        log.info("[UPLOAD] Starting file upload to MinIO - videoId: {}, appId: {}, filename: {}", videoId, appId,
+                filePart.filename());
 
         // Create temporary file to store upload
         return Mono.fromCallable(() -> Files.createTempFile("upload-", ".tmp"))
@@ -71,7 +72,8 @@ public class StorageService {
                     long contentLength = filePart.headers().getContentLength() > 0
                             ? filePart.headers().getContentLength()
                             : -1;
-                    log.info("Starting upload stream: videoId={}, contentLength={}", videoId, contentLength);
+                    log.debug("[UPLOAD] Stream started - videoId: {}, size: {}", videoId,
+                            contentLength > 0 ? contentLength : "unknown");
 
                     return filePart.content()
                             .doOnNext(dataBuffer -> {
@@ -80,7 +82,8 @@ public class StorageService {
                                     StandardOpenOption.WRITE))
                             .then(Mono.fromCallable(() -> Files.size(tempFile)))
                             .flatMap(fileSize -> {
-                                log.info("File written to temp: {} bytes", fileSize);
+                                log.debug("[UPLOAD] File written to temp - videoId: {}, size: {} bytes", videoId,
+                                        fileSize);
 
                                 // TODO: Implement chunked progress tracking for large files
                                 // Currently emits 100% progress when temp file is written.
@@ -101,11 +104,13 @@ public class StorageService {
                                 return Mono.fromFuture(s3AsyncClient.putObject(putRequest,
                                         AsyncRequestBody.fromFile(tempFile)))
                                         .doOnSuccess(response -> {
-                                            log.info("Successfully uploaded to MinIO: {}", objectKey);
+                                            log.info(
+                                                    "[UPLOAD] File uploaded successfully to MinIO - videoId: {}, key: {}",
+                                                    videoId, objectKey);
                                             emitProgress(progressSink, videoId, fileSize, fileSize, "COMPLETED");
                                         })
                                         .doOnError(error -> {
-                                            log.error("Failed to upload to MinIO", error);
+                                            log.error("[UPLOAD] MinIO upload failed - videoId: {}", videoId, error);
                                             emitProgress(progressSink, videoId, bytesWritten.get(), fileSize, "FAILED");
                                         })
                                         .then(Mono.just(objectKey))
@@ -113,9 +118,10 @@ public class StorageService {
                                             // Clean up temp file
                                             try {
                                                 Files.deleteIfExists(tempFile);
-                                                log.debug("Deleted temp file: {}", tempFile);
+                                                log.debug("[UPLOAD] Temp file deleted - videoId: {}", videoId);
                                             } catch (IOException e) {
-                                                log.warn("Failed to delete temp file: {}", tempFile, e);
+                                                log.warn("[UPLOAD] Failed to delete temp file - videoId: {}", videoId,
+                                                        e);
                                             }
                                         });
                             });
@@ -175,8 +181,8 @@ public class StorageService {
                         totalBytes > 0 ? String.format(" / %d (%d%%)", totalBytes, percentage) : ""))
                 .build();
 
-        log.debug("Emitting progress: videoId={}, bytes={}/{}, percentage={}, status={}",
-                videoId, bytesUploaded, totalBytes, percentage, status);
+        log.debug("[UPLOAD] Emitting progress - videoId: {}, bytes: {}/{}, status: {}",
+                videoId, bytesUploaded, totalBytes, status);
         sink.tryEmitNext(event);
     }
 }

@@ -5,7 +5,6 @@ import org.springframework.data.mongodb.config.EnableMongoAuditing;
 
 /**
  * MongoDB Configuration
- * 
  * Enables automatic auditing for createdAt and updatedAt fields
  */
 @Configuration

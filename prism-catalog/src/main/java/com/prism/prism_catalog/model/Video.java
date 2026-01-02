@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "videos")
-@CompoundIndex(name = "app_slug_unique", def = "{'appId': 1, 'slug': 1}", unique = true)
+@CompoundIndex(name = "app_slug_unique", def = "{'appId': 1, 'slug': 1}", unique = true) // Ensure unique slug per app
 public class Video {
 
     @Id

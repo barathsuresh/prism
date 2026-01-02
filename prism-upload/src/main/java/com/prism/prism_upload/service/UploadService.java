@@ -49,7 +49,7 @@ public class UploadService {
          * Upload video file
          */
         public Mono<UploadResponse> uploadVideo(String videoId, String appId, FilePart filePart) {
-                log.info("Starting upload for videoId: {}, appId: {}, filename: {}",
+                log.info("[UPLOAD] Starting upload - videoId: {}, appId: {}, filename: {}",
                                 videoId, appId, filePart.filename());
 
                 // Check catalog status to prevent duplicate uploads
@@ -63,6 +63,8 @@ public class UploadService {
                                                 String msg = String.format(
                                                                 "Upload rejected: video status is %s. Upload already in progress or completed.",
                                                                 status);
+                                                log.warn("[UPLOAD] Duplicate upload rejected - videoId: {}, status: {}",
+                                                                videoId, status);
                                                 return Mono.error(new DuplicateUploadException(msg));
                                         }
 
@@ -150,11 +152,13 @@ public class UploadService {
                                                                                                 .status("PROCESSING")
                                                                                                 .build())
                                                                                 .doOnSuccess(response -> log.info(
-                                                                                                "Upload completed successfully for videoId: {}",
+                                                                                                "[UPLOAD] Upload completed - videoId: {}, status: PROCESSING, queued for transcoding",
                                                                                                 videoId))
                                                                                 .doOnError(error -> {
-                                                                                        log.error("Upload failed for videoId: {}",
-                                                                                                        videoId, error);
+                                                                                        log.error("[UPLOAD] Upload failed - videoId: {}, error: {}",
+                                                                                                        videoId,
+                                                                                                        error.getMessage(),
+                                                                                                        error);
                                                                                         // Emit failure event
                                                                                         Sinks.Many<UploadProgressEvent> sink = progressSinks
                                                                                                         .get(videoId);
@@ -222,7 +226,7 @@ public class UploadService {
                                 .anyMatch(contentType::contains);
 
                 if (!validMimeType && !contentType.isEmpty()) {
-                        log.warn("Invalid MIME type: {} for file: {}", contentType, filename);
+                        log.warn("[UPLOAD] Invalid MIME type - type: {}, filename: {}", contentType, filename);
                         // Don't fail on MIME type, just warn
                 }
 

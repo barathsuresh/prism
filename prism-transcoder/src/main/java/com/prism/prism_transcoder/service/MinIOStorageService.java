@@ -27,7 +27,7 @@ public class MinIOStorageService {
     public Path downloadToTemp(String objectKey, Path tempDir) throws IOException {
         Files.createDirectories(tempDir);
         Path dest = tempDir.resolve(Path.of(objectKey).getFileName().toString());
-        log.info("Downloading from MinIO: bucket={}, key={} -> {}", minio.getBucketName(), objectKey, dest);
+        log.info("[TRANSCODER] Downloading from MinIO - bucket: {}, key: {}", minio.getBucketName(), objectKey);
         s3Client.getObject(GetObjectRequest.builder()
                 .bucket(minio.getBucketName())
                 .key(objectKey)
@@ -36,7 +36,7 @@ public class MinIOStorageService {
     }
 
     public void uploadDirectory(Path dir, String baseKey) throws IOException {
-        log.info("Uploading directory to MinIO: {} -> s3://{}/{}", dir, minio.getBucketName(), baseKey);
+        log.info("[TRANSCODER] Uploading directory to MinIO - bucket: {}, baseKey: {}", minio.getBucketName(), baseKey);
         try (Stream<Path> walk = Files.walk(dir)) {
             walk.filter(Files::isRegularFile).forEach(path -> {
                 try {
@@ -49,7 +49,7 @@ public class MinIOStorageService {
                             .contentType(contentType)
                             .build();
                     s3Client.putObject(req, RequestBody.fromFile(path));
-                    log.debug("Uploaded {} -> {}", path, key);
+                    log.debug("[TRANSCODER] File uploaded - key: {}", key);
                 } catch (Exception e) {
                     throw new RuntimeException("Failed to upload file: " + path, e);
                 }

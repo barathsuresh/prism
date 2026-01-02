@@ -3,16 +3,19 @@ package com.prism.prism_stream.service;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StreamService {
 
     private final CatalogService catalogService;
     private final MinIOPresignService presignService;
 
     public Mono<String> getMasterPlaylistUrl(String appId, String videoId) {
+        log.debug("[STREAM-SERVICE] Generating presigned master URL - videoId: {}, appId: {}", videoId, appId);
         return catalogService.getVideo(appId, videoId)
                 .flatMap(v -> {
                     String hlsUrl = v.getHlsMasterUrl();
@@ -29,6 +32,8 @@ public class StreamService {
     }
 
     public Mono<String> getThumbnailUrl(String appId, String videoId, String size) {
+        log.debug("[STREAM-SERVICE] Generating presigned thumbnail URL - videoId: {}, size: {}, appId: {}", videoId,
+                size, appId);
         return catalogService.getVideo(appId, videoId)
                 .flatMap(v -> {
                     String thumbUrl = switch (size) {
@@ -51,6 +56,7 @@ public class StreamService {
     }
 
     public Mono<String> getPublicMasterPlaylistUrl(String videoId) {
+        log.debug("[STREAM-SERVICE] Generating presigned public master URL - videoId: {}", videoId);
         return catalogService.getPublicVideo(videoId)
                 .flatMap(v -> {
                     String hlsUrl = v.getHlsMasterUrl();
@@ -67,6 +73,7 @@ public class StreamService {
     }
 
     public Mono<String> getPublicThumbnailUrl(String videoId, String size) {
+        log.debug("[STREAM-SERVICE] Generating presigned public thumbnail URL - videoId: {}, size: {}", videoId, size);
         return catalogService.getPublicVideo(videoId)
                 .flatMap(v -> {
                     String thumbUrl = switch (size) {

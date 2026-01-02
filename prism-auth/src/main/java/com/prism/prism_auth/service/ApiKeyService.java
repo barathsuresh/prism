@@ -52,10 +52,16 @@ public class ApiKeyService {
     @Transactional
     public ApiKeyCreateResponse createApiKey(String appId, String ownerId, String ownerUserName,
             ApiKeyRequest request) {
+        log.info("[APIKEY-SERVICE] Creating new API key - appId: {}, ownerId: {}, ownerUserName: {}, keyLabel: {}",
+                appId, ownerId, ownerUserName, request.getLabel());
+
         // Generate unique key prefix and secret
         String keyPrefix = generateKeyPrefix();
         String keySecret = generateKeySecret();
         String fullKey = keyPrefix + ":" + keySecret;
+
+        log.debug("[APIKEY-SERVICE] Generated key pair - prefix: {}, type: {}, scopes: {}",
+                keyPrefix, request.getType(), request.getScopes());
 
         // Hash the secret for storage
         String secretHash = passwordEncoder.encode(keySecret);
@@ -76,7 +82,8 @@ public class ApiKeyService {
                 .build();
 
         ApiKey saved = apiKeyRepository.save(apiKey);
-        log.info("Created API key {} for app {}", keyPrefix, appId);
+        log.info("[APIKEY-SERVICE] API key created successfully - keyId: {}, keyPrefix: {}, appId: {}, ownerId: {}",
+                saved.getId(), keyPrefix, appId, ownerId);
 
         // Return the key ONCE - never return plaintext again
         return ApiKeyCreateResponse.builder()
@@ -100,6 +107,9 @@ public class ApiKeyService {
      * @return ApiKeyResponse if valid, throws exception if invalid
      */
     public ApiKeyResponse validateApiKey(String keyPrefix, String keySecret, String scope) {
+        log.info("[APIKEY-SERVICE] API key validation request - keyPrefix: {}, scope: {}",
+                keyPrefix, scope != null ? scope : "none");
+
         // Delegate to multi-scope validator with single scope
         java.util.List<String> scopes = (scope == null || scope.isBlank()) ? java.util.List.of()
                 : java.util.List.of(scope);
@@ -110,18 +120,27 @@ public class ApiKeyService {
      * Validate an API key with optional required scopes (must have all)
      */
     public ApiKeyResponse validateApiKey(String keyPrefix, String keySecret, java.util.List<String> requiredScopes) {
+        log.debug("[APIKEY-SERVICE] Multi-scope validation initiated - keyPrefix: {}, requiredScopes: {}",
+                keyPrefix, requiredScopes);
+
         // Find key by prefix, then verify the secret using BCrypt
         ApiKey apiKey = apiKeyRepository.findByKeyPrefix(keyPrefix)
-                .orElseThrow(() -> new IllegalArgumentException("API key not found"));
+                .orElseThrow(() -> {
+                    log.warn("[APIKEY-SERVICE] API key not found - keyPrefix: {}", keyPrefix);
+                    return new IllegalArgumentException("API key not found");
+                });
 
         // Check if key is active
         if (!apiKey.isValidAndActive()) {
+            log.warn("[APIKEY-SERVICE] API key not valid or active - keyPrefix: {}, status: {}, expiresAt: {}",
+                    keyPrefix, apiKey.getStatus(), apiKey.getExpiresAt());
             throw new IllegalArgumentException("API key is revoked or expired");
         }
 
         // Verify the secret against the stored hash
         if (!passwordEncoder.matches(keySecret, apiKey.getKeyHash())) {
-            log.warn("Invalid secret for key prefix: {}", keyPrefix);
+            log.warn("[APIKEY-SERVICE] Invalid secret for key prefix - keyPrefix: {}, ownerUserName: {}",
+                    keyPrefix, apiKey.getOwnerUserName());
             throw new IllegalArgumentException("Invalid API key credentials");
         }
 
@@ -133,7 +152,8 @@ public class ApiKeyService {
                     .filter(s -> !keyScopeValues.contains(s))
                     .toList();
             if (!missing.isEmpty()) {
-                log.warn("Insufficient scopes for key: {} (missing: {}, required: {}, granted: {})",
+                log.warn(
+                        "[APIKEY-SERVICE] Insufficient scopes for key - keyPrefix: {}, missing: {}, required: {}, granted: {}",
                         keyPrefix, missing, requiredScopes, keyScopeValues);
                 String msg = String.format(
                         "Insufficient scopes. Missing: %s. Required: %s. Granted: %s",
@@ -146,7 +166,9 @@ public class ApiKeyService {
         apiKey.updateLastUsage(null); // IP can be added if needed
         apiKeyRepository.save(apiKey);
 
-        log.debug("API key validated: {}", keyPrefix);
+        log.info(
+                "[APIKEY-SERVICE] API key validation successful - keyPrefix: {}, appId: {}, ownerUserName: {}, scopes: {}",
+                keyPrefix, apiKey.getAppId(), apiKey.getOwnerUserName(), requiredScopes);
 
         // Return key info for the requesting service
         return ApiKeyResponse.builder()
@@ -172,12 +194,19 @@ public class ApiKeyService {
      * @return List of API keys (secrets are never included)
      */
     public List<ApiKeyResponse> listApiKeys(String appId, String ownerId) {
+        log.info("[APIKEY-SERVICE] Listing API keys for app - appId: {}, ownerId: {}", appId, ownerId);
+
         List<ApiKey> keys = apiKeyRepository.findByAppId(appId);
 
         // Verify ownership - all keys for an app belong to the same owner
         if (!keys.isEmpty() && !keys.get(0).getOwnerId().equals(ownerId)) {
+            log.warn("[APIKEY-SERVICE] Unauthorized list attempt - requestUserId: {}, appId: {}, actualOwnerId: {}",
+                    ownerId, appId, keys.get(0).getOwnerId());
             throw new IllegalArgumentException("You don't have permission to view these keys");
         }
+
+        log.info("[APIKEY-SERVICE] API keys listed successfully - appId: {}, ownerId: {}, keyCount: {}",
+                appId, ownerId, keys.size());
 
         return keys.stream()
                 .map(this::mapToResponse)
@@ -191,7 +220,12 @@ public class ApiKeyService {
      * @return List of API keys owned by this user (secrets are never included)
      */
     public List<ApiKeyResponse> listUserApiKeys(String ownerUserName) {
+        log.info("[APIKEY-SERVICE] Listing all API keys for user - ownerUserName: {}", ownerUserName);
+
         List<ApiKey> keys = apiKeyRepository.findByOwnerUserName(ownerUserName);
+
+        log.info("[APIKEY-SERVICE] User API keys listed successfully - ownerUserName: {}, keyCount: {}",
+                ownerUserName, keys.size());
 
         return keys.stream()
                 .map(this::mapToResponse)
@@ -207,11 +241,20 @@ public class ApiKeyService {
      */
     @Transactional
     public void revokeApiKey(String keyId, String appId, String ownerId) {
+        log.info("[APIKEY-SERVICE] Revoke API key request - keyId: {}, appId: {}, ownerId: {}",
+                keyId, appId, ownerId);
+
         ApiKey apiKey = apiKeyRepository.findById(keyId)
-                .orElseThrow(() -> new IllegalArgumentException("API key not found"));
+                .orElseThrow(() -> {
+                    log.warn("[APIKEY-SERVICE] API key not found for revocation - keyId: {}", keyId);
+                    return new IllegalArgumentException("API key not found");
+                });
 
         // Verify ownership
         if (!apiKey.getAppId().equals(appId) || !apiKey.getOwnerId().equals(ownerId)) {
+            log.warn(
+                    "[APIKEY-SERVICE] Unauthorized revoke attempt - keyPrefix: {}, requestUserId: {}, actualOwnerId: {}",
+                    apiKey.getKeyPrefix(), ownerId, apiKey.getOwnerId());
             throw new IllegalArgumentException("You don't have permission to revoke this key");
         }
 
@@ -221,7 +264,8 @@ public class ApiKeyService {
         apiKey.setRevokedReason("Manually revoked by developer");
 
         apiKeyRepository.save(apiKey);
-        log.info("Revoked API key: {}", apiKey.getKeyPrefix());
+        log.info("[APIKEY-SERVICE] API key revoked successfully - keyPrefix: {}, keyId: {}, ownerId: {}",
+                apiKey.getKeyPrefix(), keyId, ownerId);
     }
 
     /**
@@ -233,13 +277,25 @@ public class ApiKeyService {
      * @return API key response
      */
     public ApiKeyResponse getApiKey(String keyId, String appId, String ownerId) {
+        log.info("[APIKEY-SERVICE] Get API key request - keyId: {}, appId: {}, ownerId: {}",
+                keyId, appId, ownerId);
+
         ApiKey apiKey = apiKeyRepository.findById(keyId)
-                .orElseThrow(() -> new IllegalArgumentException("API key not found"));
+                .orElseThrow(() -> {
+                    log.warn("[APIKEY-SERVICE] API key not found - keyId: {}", keyId);
+                    return new IllegalArgumentException("API key not found");
+                });
 
         // Verify ownership
         if (!apiKey.getAppId().equals(appId) || !apiKey.getOwnerId().equals(ownerId)) {
+            log.warn(
+                    "[APIKEY-SERVICE] Unauthorized access attempt - keyPrefix: {}, requestUserId: {}, actualOwnerId: {}",
+                    apiKey.getKeyPrefix(), ownerId, apiKey.getOwnerId());
             throw new IllegalArgumentException("You don't have permission to view this key");
         }
+
+        log.debug("[APIKEY-SERVICE] API key retrieved - keyPrefix: {}, keyId: {}",
+                apiKey.getKeyPrefix(), keyId);
 
         return mapToResponse(apiKey);
     }
@@ -289,9 +345,13 @@ public class ApiKeyService {
      */
     @Transactional
     public int revokeAllKeysForApp(String appId, String ownerId, String reason) {
+        log.info("[APIKEY-SERVICE] Revoking all API keys for app - appId: {}, ownerId: {}, reason: {}",
+                appId, ownerId, reason);
+
         List<ApiKey> activeKeys = apiKeyRepository.findByAppIdAndStatusEquals(appId, ApiKeyStatus.ACTIVE);
 
         if (activeKeys.isEmpty()) {
+            log.info("[APIKEY-SERVICE] No active keys found to revoke - appId: {}", appId);
             return 0;
         }
 
@@ -300,7 +360,8 @@ public class ApiKeyService {
         for (ApiKey key : activeKeys) {
             // Safety check: all keys of an app should belong to the same owner
             if (!key.getOwnerId().equals(ownerId)) {
-                log.warn("Skipping key {} due to owner mismatch (expected {}, found {})",
+                log.warn(
+                        "[APIKEY-SERVICE] Skipping key due to owner mismatch - keyPrefix: {}, expectedOwnerId: {}, foundOwnerId: {}",
                         key.getKeyPrefix(), ownerId, key.getOwnerId());
                 continue;
             }
@@ -312,7 +373,8 @@ public class ApiKeyService {
         }
 
         if (revoked > 0) {
-            log.info("Revoked {} API keys for app {}", revoked, appId);
+            log.info("[APIKEY-SERVICE] Batch revoke completed - appId: {}, ownerId: {}, keysRevoked: {}",
+                    appId, ownerId, revoked);
         }
         return revoked;
     }

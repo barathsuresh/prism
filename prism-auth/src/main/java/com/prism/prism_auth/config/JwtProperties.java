@@ -13,9 +13,9 @@ public class JwtProperties {
     private String secret;
     private String issuer;
     private String audience;
-    private Duration expiration;        // binds from expiration-seconds
-    private Duration refreshExpiration; // binds from refresh-expiration-seconds
-    private Duration clockSkew;         // binds from clock-skew-seconds
-    private String tokenPrefix;         // binds from token-prefix
+    private Duration expiration;
+    private Duration refreshExpiration;
+    private Duration clockSkew;
+    private String tokenPrefix;
     private String header;
 }

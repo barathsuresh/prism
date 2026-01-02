@@ -43,7 +43,7 @@ public class UploadController {
             @RequestHeader("X-App-Id") String appId,
             @RequestPart("file") FilePart filePart) {
 
-        log.info("Upload request received: videoId={}, appId={}, filename={}",
+        log.info("[UPLOAD] Upload request received - videoId: {}, appId: {}, filename: {}",
                 videoId, appId, filePart.filename());
 
         return uploadService.uploadVideo(videoId, appId, filePart);
@@ -59,7 +59,7 @@ public class UploadController {
     @GetMapping(value = "/videos/{videoId}/progress", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<UploadProgressEvent> getUploadProgress(@PathVariable String videoId) {
 
-        log.info("Progress stream requested for videoId={}", videoId);
+        log.info("[UPLOAD] Progress stream requested - videoId: {}", videoId);
 
         return uploadService.getUploadProgress(videoId);
     }

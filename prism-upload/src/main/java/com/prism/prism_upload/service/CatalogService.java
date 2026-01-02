@@ -30,10 +30,11 @@ public class CatalogService {
                 .bodyToMono(VideoInfo.class)
                 .doOnError(e -> {
                     if (e instanceof WebClientResponseException wcre) {
-                        log.warn("Catalog GET video failed: status={}, videoId={}, appId={}", wcre.getStatusCode().value(),
+                        log.warn("[UPLOAD] Catalog GET video failed - status: {}, videoId: {}, appId: {}",
+                                wcre.getStatusCode().value(),
                                 videoId, appId);
                     } else {
-                        log.warn("Catalog GET video failed: videoId={}, appId={}", videoId, appId, e);
+                        log.warn("[UPLOAD] Catalog GET video failed - videoId: {}, appId: {}", videoId, appId, e);
                     }
                 });
     }
@@ -42,14 +43,14 @@ public class CatalogService {
      * Update catalog service after upload
      */
     public Mono<Void> updateAfterUpload(String videoId, UpdateAfterUploadRequest request) {
-        log.info("Updating catalog for videoId: {} with status: {}", videoId, request.getStatus());
+        log.info("[UPLOAD] Updating catalog after upload - videoId: {}, status: {}", videoId, request.getStatus());
 
         return catalogWebClient.put()
                 .uri("/api/catalog/internal/videos/{videoId}/upload", videoId)
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(Void.class)
-                .doOnSuccess(v -> log.info("Successfully updated catalog for videoId: {}", videoId))
-                .doOnError(error -> log.error("Failed to update catalog for videoId: {}", videoId, error));
+                .doOnSuccess(v -> log.info("[UPLOAD] Catalog updated successfully - videoId: {}", videoId))
+                .doOnError(error -> log.error("[UPLOAD] Failed to update catalog - videoId: {}", videoId, error));
     }
 }

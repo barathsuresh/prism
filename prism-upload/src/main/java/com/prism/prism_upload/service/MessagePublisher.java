@@ -52,7 +52,7 @@ public class MessagePublisher {
      */
     public Mono<Void> publishTranscodeMessage(TranscodeMessage message) {
         return Mono.fromRunnable(() -> {
-            log.info("Publishing transcode message for videoId: {}", message.getVideoId());
+            log.info("[UPLOAD] Publishing transcode message - videoId: {}", message.getVideoId());
 
             // Send message to RabbitMQ
             // This is asynchronous - doesn't wait for transcoder to process it
@@ -61,7 +61,7 @@ public class MessagePublisher {
                     RabbitMQConfig.TRANSCODE_ROUTING_KEY, // How to route (routing key)
                     message); // What to send (payload)
 
-            log.info("Successfully published transcode message for videoId: {}", message.getVideoId());
+            log.info("[UPLOAD] Transcode message published successfully - videoId: {}", message.getVideoId());
         });
     }
 }

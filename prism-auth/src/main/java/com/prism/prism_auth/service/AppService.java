@@ -32,15 +32,18 @@ public class AppService {
      */
     @Transactional
     public App createApp(AppRequest request, String ownerId) {
+        log.debug("[APP-SERVICE] Creating app - name: {}, description: {}, ownerId: {}",
+                request.getName(), request.getDescription(), ownerId);
         // Generate slug from name if not provided
         String slug = request.getSlug() != null ? request.getSlug() : generateSlug(request.getName());
 
         // Validate slug uniqueness for this owner
         appRepository.findBySlugAndOwnerIdAndDeletedAtIsNull(slug, ownerId)
                 .ifPresent(app -> {
+                    log.debug("[APP-SERVICE] App with slug '{}' already exists for owner {}", slug, ownerId);
                     throw new IllegalArgumentException("App with slug '" + slug + "' already exists");
                 });
-
+        log.debug("[APP-SERVICE] App slug '{}' is unique for owner {}", slug, ownerId);
         // Create new app
         App app = App.builder()
                 .name(request.getName())
@@ -52,7 +55,9 @@ public class AppService {
                 .customMetadata(request.getCustomMetadata())
                 .build();
 
-        return appRepository.save(app);
+        App saved = appRepository.save(app);
+        log.info("[APP-SERVICE] App created - appId: {}, name: {}", saved.getId(), saved.getName());
+        return saved;
     }
 
     /**
@@ -78,6 +83,7 @@ public class AppService {
                 .orElseThrow(() -> new IllegalArgumentException("App not found"));
 
         if (!app.getOwnerId().equals(ownerId)) {
+            log.warn("[APP-SERVICE] Unauthorized update - userId: {}, appId: {}", ownerId, appId);
             throw new IllegalArgumentException("You don't have permission to update this app");
         }
 
@@ -111,6 +117,7 @@ public class AppService {
                     appRepository.findBySlugAndOwnerIdAndDeletedAtIsNull(newSlug, ownerId)
                             .ifPresent(other -> {
                                 if (other.getId() != null && !other.getId().equals(app.getId())) {
+                                    log.warn("App with slug already exists");
                                     throw new IllegalArgumentException(
                                             "App with slug '" + newSlug + "' already exists");
                                 }
@@ -139,6 +146,7 @@ public class AppService {
                 .orElseThrow(() -> new IllegalArgumentException("App not found"));
 
         if (!app.getOwnerId().equals(ownerId)) {
+            log.warn("[APP-SERVICE] Unauthorized update - userId: {}, appId: {}", ownerId, appId);
             throw new IllegalArgumentException("You don't have permission to update this app");
         }
 
@@ -170,6 +178,7 @@ public class AppService {
                     appRepository.findBySlugAndOwnerIdAndDeletedAtIsNull(newSlug, ownerId)
                             .ifPresent(other -> {
                                 if (other.getId() != null && !other.getId().equals(app.getId())) {
+                                    log.warn("App with slug '{}' already exists for owner {}", newSlug, ownerId);
                                     throw new IllegalArgumentException(
                                             "App with slug '" + newSlug + "' already exists");
                                 }
@@ -195,6 +204,7 @@ public class AppService {
                 .orElseThrow(() -> new IllegalArgumentException("App not found"));
 
         if (!app.getOwnerId().equals(ownerId)) {
+            log.warn("[APP-SERVICE] Unauthorized delete - userId: {}, appId: {}", ownerId, appId);
             throw new IllegalArgumentException("You don't have permission to delete this app");
         }
 
@@ -204,7 +214,7 @@ public class AppService {
 
         // Revoke all API keys associated with this app
         int revoked = apiKeyService.revokeAllKeysForApp(app.getId(), ownerId, "App deleted by owner");
-        log.info("Deleted app {} and revoked {} keys", app.getId(), revoked);
+        log.info("[APP-SERVICE] App deleted - appId: {}, keysRevoked: {}", app.getId(), revoked);
     }
 
     /**
@@ -216,11 +226,11 @@ public class AppService {
      * @throws IllegalArgumentException if app not found or not owned by user
      */
     public App getApp(String appId, String ownerId) {
-        log.debug("App ID: {}, Owner ID: {}", appId, ownerId);
         App app = appRepository.findByIdAndDeletedAtIsNull(appId)
                 .orElseThrow(() -> new IllegalArgumentException("App not found"));
 
         if (!app.getOwnerId().equals(ownerId)) {
+            log.warn("[APP-SERVICE] Unauthorized access - userId: {}, appId: {}", ownerId, appId);
             throw new IllegalArgumentException("You don't have permission to view this app");
         }
 
@@ -294,6 +304,7 @@ public class AppService {
                     appRepository.findBySlugAndOwnerIdAndDeletedAtIsNull(newSlug, ownerId)
                             .ifPresent(other -> {
                                 if (other.getId() != null && !other.getId().equals(app.getId())) {
+                                    log.warn("App with slug '{}' already exists for owner {}", newSlug, ownerId);
                                     throw new IllegalArgumentException(
                                             "App with slug '" + newSlug + "' already exists");
                                 }
@@ -378,7 +389,7 @@ public class AppService {
 
         // Revoke all API keys associated with this app
         int revoked = apiKeyService.revokeAllKeysForApp(app.getId(), ownerId, "App deleted by owner");
-        log.info("Deleted app {} (slug={}) and revoked {} keys", app.getId(), slug, revoked);
+        log.info("[APP-SERVICE] App deleted - appId: {}, slug: {}, keysRevoked: {}", app.getId(), slug, revoked);
     }
 
     /**

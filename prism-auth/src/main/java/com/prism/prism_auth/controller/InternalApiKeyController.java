@@ -68,11 +68,16 @@ public class InternalApiKeyController {
             @RequestParam(value = "scope", required = false) java.util.List<String> scope,
             @RequestParam(value = "scopes", required = false) String scopesParam) {
 
+        log.info("[APIKEY-INTERNAL] API key validation request initiated - scopeParams: {}, scopesParam: {}",
+                scope != null ? scope.size() : 0, scopesParam != null ? "present" : "absent");
+
         try {
             // Parse the API key (format: "pk_xxx:sk_xxx")
             String[] keyParts = apiKey.split(":");
             if (keyParts.length != 2) {
-                log.warn("Invalid API key format");
+                log.warn(
+                        "[APIKEY-INTERNAL] API key validation failed - Invalid format: expected 'prefix:secret', got {} parts",
+                        keyParts.length);
                 return ResponseEntity.status(401).body(ApiKeyValidationResponse.builder()
                         .valid(false)
                         .message("Invalid API key format. Expected format: prefix:secret")
@@ -82,7 +87,7 @@ public class InternalApiKeyController {
             String keyPrefix = keyParts[0];
             String keySecret = keyParts[1];
 
-            log.debug("Validating API key: {}", keyPrefix);
+            log.debug("[APIKEY-INTERNAL] Parsing API key - keyPrefix: {}", keyPrefix);
 
             // Build required scopes list (supports repeated scope params and
             // comma-separated scopes)
@@ -99,13 +104,19 @@ public class InternalApiKeyController {
                 }
             }
 
+            log.debug(
+                    "[APIKEY-INTERNAL] Validating API key with scopes - keyPrefix: {}, requiredScopes: {}, scopeCount: {}",
+                    keyPrefix, requiredScopes, requiredScopes.size());
+
             // Validate the key with required scopes (if any)
             ApiKeyResponse apiKeyResponse = apiKeyService.validateApiKey(
                     keyPrefix,
                     keySecret,
                     requiredScopes);
 
-            log.info("API key validation successful: {}", keyPrefix);
+            log.info(
+                    "[APIKEY-INTERNAL] API key validation successful - keyPrefix: {}, keyId: {}, appId: {}, scopes: {}",
+                    keyPrefix, apiKeyResponse.getId(), apiKeyResponse.getAppId(), requiredScopes);
 
             // Return success response
             return ResponseEntity.ok(ApiKeyValidationResponse.builder()
@@ -114,7 +125,7 @@ public class InternalApiKeyController {
                     .build());
 
         } catch (IllegalArgumentException e) {
-            log.warn("API key validation failed: {}", e.getMessage());
+            log.warn("[APIKEY-INTERNAL] API key validation failed - Reason: {}", e.getMessage());
 
             // Return failure response
             return ResponseEntity.status(401).body(ApiKeyValidationResponse.builder()
@@ -123,7 +134,7 @@ public class InternalApiKeyController {
                     .build());
 
         } catch (Exception e) {
-            log.error("Unexpected error during API key validation", e);
+            log.error("[APIKEY-INTERNAL] Unexpected error during API key validation - Error: {}", e.getMessage(), e);
 
             return ResponseEntity.status(500).body(ApiKeyValidationResponse.builder()
                     .valid(false)

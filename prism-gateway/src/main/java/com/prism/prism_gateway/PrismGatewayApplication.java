@@ -2,19 +2,48 @@ package com.prism.prism_gateway;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.event.EventListener;
+import org.springframework.core.env.Environment;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @SpringBootApplication
 @EnableDiscoveryClient
+@Slf4j
+@RequiredArgsConstructor
 public class PrismGatewayApplication {
 
+        private final Environment environment;
+
         public static void main(String[] args) {
+                log.info("[GATEWAY] Starting Prism Gateway");
                 SpringApplication.run(PrismGatewayApplication.class, args);
+        }
+
+        @EventListener(ApplicationReadyEvent.class)
+        public void onApplicationReady() {
+                String port = environment.getProperty("server.port", "8080");
+                String contextPath = environment.getProperty("server.servlet.context-path", "");
+
+                log.info("[GATEWAY] Prism Gateway started successfully");
+                log.info("[GATEWAY] Local access: http://localhost:{}{}", port, contextPath);
+
+                try {
+                        String hostAddress = java.net.InetAddress.getLocalHost().getHostAddress();
+                        if (!hostAddress.equals("127.0.0.1")) {
+                                log.info("[GATEWAY] Network access: http://{}:{}{}", hostAddress, port, contextPath);
+                        }
+                } catch (Exception e) {
+                        log.debug("[GATEWAY] Could not determine network address", e);
+                }
         }
 
         // This is the "Java Way" to define routes (from the guide)

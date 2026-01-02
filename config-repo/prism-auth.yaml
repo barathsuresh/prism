@@ -5,6 +5,8 @@ server:
   port: 8081
 
 spring:
+  application:
+    name: prism-auth
   mongodb:
     uri: mongodb://localhost:27017/prism-auth-db
 
@@ -20,3 +22,19 @@ app:
     clockSkew: 60s # allowed clock skew in seconds (Spring Duration format)
     tokenPrefix: Bearer
     header: Authorization
+
+management:
+  tracing:
+    sampling:
+      probability: 1
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  observations:
+    key-values:
+      application: ${spring.application.name}

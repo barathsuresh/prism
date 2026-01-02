@@ -36,7 +36,7 @@ public class ApiKeyValidationFilter implements GlobalFilter {
         URI requestUri = exchange.getRequest().getURI();
         String path = requestUri.getPath();
 
-        log.info("[API Key Validation] Incoming request: {} {}", exchange.getRequest().getMethod(), path);
+        log.info("[GATEWAY] Incoming request: {} {}", exchange.getRequest().getMethod(), path);
 
         // Determine required scopes for this path and method (first match wins)
         String method = exchange.getRequest().getMethod().name();
@@ -55,41 +55,41 @@ public class ApiKeyValidationFilter implements GlobalFilter {
         // No X-API-Key header is required and no auth validation call is made
         if (requiredScopes.isEmpty()) {
             log.debug(
-                    "[API Key Validation] No scopes required for path: {} - Skipping validation (public/internal endpoint)",
+                    "[GATEWAY] No scopes required for path: {} - Skipping validation",
                     path);
             return chain.filter(exchange);
         }
 
-        log.debug("[API Key Validation] Required scopes: {} for path: {}", requiredScopes, path);
+        log.debug("[GATEWAY] Required scopes: {} for path: {}", requiredScopes, path);
 
         // Read X-API-Key header
         String apiKeyHeader = exchange.getRequest().getHeaders().getFirst("X-API-Key");
         if (apiKeyHeader == null || apiKeyHeader.isBlank()) {
-            log.warn("[API Key Validation] Missing or blank X-API-Key header for path: {}", path);
+            log.warn("[GATEWAY] Missing X-API-Key header - path: {}", path);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
-        log.debug("[API Key Validation] X-API-Key header found, validating with auth service");
+        log.debug("[GATEWAY] X-API-Key header found, validating with auth service");
 
         // Call Auth internal validate endpoint with scopes
         String scopesCsv = requiredScopes.stream().collect(Collectors.joining(","));
 
         // Use service ID via Eureka: prism-auth
         String validateUrl = "http://prism-auth/api/auth/internal/validate?scopes=" + scopesCsv;
-        log.debug("[API Key Validation] Calling auth service: {}", validateUrl);
+        log.debug("[GATEWAY] Calling auth service: {}", validateUrl);
 
         return webClient.post()
                 .uri(validateUrl)
                 .header("X-API-Key", apiKeyHeader)
                 .exchangeToMono(clientResp -> {
                     if (clientResp.statusCode().value() == 401) {
-                        log.warn("[API Key Validation] Auth service returned 401 - Invalid API key for path: {}", path);
+                        log.warn("[GATEWAY] Invalid API key - path: {}", path);
                         exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                         return exchange.getResponse().setComplete();
                     }
                     if (clientResp.statusCode().is5xxServerError()) {
-                        log.error("[API Key Validation] Auth service returned 5xx error - status: {}",
+                        log.error("[GATEWAY] Auth service error - status: {}",
                                 clientResp.statusCode());
                         exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
                         return exchange.getResponse().setComplete();
@@ -98,8 +98,7 @@ public class ApiKeyValidationFilter implements GlobalFilter {
                             .flatMap(res -> {
                                 if (res == null || !res.isValid() || res.getApiKey() == null) {
                                     log.warn(
-                                            "[API Key Validation] Invalid response from auth service - null or invalid: {}",
-                                            res);
+                                            "[GATEWAY] Invalid validation response from auth service");
                                     exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                                     return exchange.getResponse().setComplete();
                                 }
@@ -109,7 +108,7 @@ public class ApiKeyValidationFilter implements GlobalFilter {
                                 String ownerUserName = res.getApiKey().getOwnerUserName();
 
                                 log.info(
-                                        "[API Key Validation] API key validated successfully - appId: {}, owner: {} for path: {}",
+                                        "[GATEWAY] API key validated - appId: {}, owner: {}, path: {}",
                                         appId, ownerUserName, path);
 
                                 ServerWebExchange mutated = exchange.mutate().request(
@@ -120,12 +119,12 @@ public class ApiKeyValidationFilter implements GlobalFilter {
                                                 .build())
                                         .build();
 
-                                log.debug("[API Key Validation] Headers added - X-App-Id: {}, X-Owner-User: {}",
+                                log.debug("[GATEWAY] Headers added - X-App-Id: {}, X-Owner-User: {}",
                                         appId, ownerUserName != null ? ownerUserName : "unknown");
 
                                 return chain.filter(mutated);
                             }).onErrorResume(e -> {
-                                log.error("[API Key Validation] Error while validating API key for path: {}", path, e);
+                                log.error("[GATEWAY] Error validating API key - path: {}", path, e);
                                 exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
                                 return exchange.getResponse().setComplete();
                             });

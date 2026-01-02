@@ -55,7 +55,8 @@ public class MinIOPresignService {
             PresignedGetObjectRequest presignedRequest = presigner.presignGetObject(presignRequest);
             String presignedUrl = presignedRequest.url().toString();
 
-            log.debug("Generated presigned URL for key={}, expires in {}min", objectKey, expirationMinutes);
+            log.debug("[STREAM-SERVICE] Generated presigned URL - key: {}, expiresIn: {}min", objectKey,
+                    expirationMinutes);
             return presignedUrl;
         }
     }

@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.core.async.AsyncResponseTransformer;
@@ -16,11 +17,13 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class S3Service {
 
     private final S3AsyncClient s3AsyncClient;
 
     public Mono<String> getObjectAsString(String bucket, String key) {
+        log.debug("[STREAM-SERVICE] Fetching object as string - bucket: {}, key: {}", bucket, key);
         GetObjectRequest req = GetObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
@@ -38,6 +41,7 @@ public class S3Service {
     }
 
     public Flux<ByteBuffer> streamObject(String bucket, String key) {
+        log.debug("[STREAM-SERVICE] Streaming object - bucket: {}, key: {}", bucket, key);
         GetObjectRequest req = GetObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)

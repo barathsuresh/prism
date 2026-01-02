@@ -1,10 +1,12 @@
+logging:
+  level:
+    com.prism: DEBUG
 server:
   port: 8084
 
 spring:
   application:
     name: prism-transcoder
-
   mongodb:
     uri: mongodb://localhost:27017/prism-transcoder-db
   rabbitmq:
@@ -56,6 +58,18 @@ minio:
   secret-key: minioadmin
   bucket-name: prism-videos
 
-logging:
-  level:
-    com.prism: DEBUG
+management:
+  tracing:
+    sampling:
+      probability: 1
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  observations:
+    key-values:
+      application: ${spring.application.name}

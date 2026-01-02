@@ -31,12 +31,14 @@ public class TranscodeJobService {
         private final CatalogClient catalogClient;
 
         public void process(TranscodeMessage msg) throws Exception {
+                log.info("[TRANSCODER] Starting transcode job - videoId: {}, appId: {}", msg.getVideoId(),
+                                msg.getAppId());
                 // Set status to PROCESSING at the start
                 UpdateStreamsRequest processingUpdate = UpdateStreamsRequest.builder()
                                 .status(VideoStatus.PROCESSING)
                                 .build();
                 catalogClient.updateStreams(msg.getVideoId(), processingUpdate).block();
-                log.info("Set status to PROCESSING for videoId={}", msg.getVideoId());
+                log.debug("[TRANSCODER] Status updated to PROCESSING - videoId: {}", msg.getVideoId());
 
                 ffmpegService.verifyAvailable();
 
@@ -45,29 +47,34 @@ public class TranscodeJobService {
 
                 // 1) Download source video to workspace
                 Path source = storageService.downloadToTemp(msg.getSourceFilePath(), workspace);
+                log.debug("[TRANSCODER] Source video downloaded - videoId: {}", msg.getVideoId());
 
                 // 1b) Probe duration (optional)
                 Integer durationSec = null;
                 try {
                         durationSec = ffmpegService.probeDurationSeconds(source);
                 } catch (Exception e) {
-                        log.warn("Duration probe failed for {}", source, e);
+                        log.warn("[TRANSCODER] Duration probe failed - videoId: {}", msg.getVideoId(), e);
                 }
 
                 // 2) Transcode to HLS (variants from config)
                 Path hlsOut = workspace.resolve("hls_out");
+                log.debug("[TRANSCODER] Starting HLS transcode - videoId: {}", msg.getVideoId());
                 ffmpegService.transcodeMultiVariantHls(source, hlsOut);
 
                 // 2b) Generate thumbnails
                 Path thumbsOut = workspace.resolve("thumbnails_out");
+                log.debug("[TRANSCODER] Generating thumbnails - videoId: {}", msg.getVideoId());
                 ffmpegService.generateThumbnails(source, thumbsOut);
 
                 // 3) Upload HLS output to MinIO at {storageBasePath}/hls
                 String baseKey = msg.getStorageBasePath() + "/hls";
+                log.debug("[TRANSCODER] Uploading HLS output - videoId: {}", msg.getVideoId());
                 storageService.uploadDirectory(hlsOut, baseKey);
 
                 // 3b) Upload thumbnails to MinIO at {storageBasePath}/thumbnails
                 String thumbsKey = msg.getStorageBasePath() + "/thumbnails";
+                log.debug("[TRANSCODER] Uploading thumbnails - videoId: {}", msg.getVideoId());
                 storageService.uploadDirectory(thumbsOut, thumbsKey);
 
                 // 4) Update catalog with HLS URLs and status
@@ -120,13 +127,14 @@ public class TranscodeJobService {
                                 .build();
                 // Block to ensure update completes before cleanup/log
                 catalogClient.updateStreams(msg.getVideoId(), update).block();
+                log.debug("[TRANSCODER] Catalog updated with READY status - videoId: {}", msg.getVideoId());
 
                 // 5) Cleanup temp files (best effort)
                 tryDelete(workspace);
 
-                log.info("Transcoding complete for videoId={} -> s3://{}/{}", msg.getVideoId(),
-                                minioProps.getBucketName(),
-                                baseKey);
+                log.info("[TRANSCODER] Transcode job completed - videoId: {}, appId: {}, bucket: {}, key: {}",
+                                msg.getVideoId(),
+                                msg.getAppId(), minioProps.getBucketName(), baseKey);
         }
 
         private String ensureNoTrailingSlash(String s) {
@@ -171,7 +179,7 @@ public class TranscodeJobService {
                                                 }
                                         });
                 } catch (IOException e) {
-                        log.warn("Failed to cleanup temp dir {}", dir, e);
+                        log.warn("[TRANSCODER] Failed to cleanup temp directory", e);
                 }
         }
 }

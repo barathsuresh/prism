@@ -5,8 +5,26 @@ server:
   port: 8082 # Catalog runs on 8082
 
 spring:
+  application:
+    name: prism-catalog
   mongodb:
     uri: mongodb://localhost:27017/prism-catalog-db
   data:
     mongodb:
       auto-index-creation: true # Automatically create indexes from @CompoundIndex annotations
+
+management:
+  tracing:
+    sampling:
+      probability: 1
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  observations:
+    key-values:
+      application: ${spring.application.name}

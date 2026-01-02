@@ -36,15 +36,15 @@ public class TranscodeListener {
         try {
             msg = objectMapper.readValue(payload, TranscodeMessage.class);
         } catch (Exception e) {
-            log.error("Failed to deserialize TranscodeMessage payload", e);
+            log.error("[TRANSCODER] Failed to deserialize message", e);
             throw new RuntimeException("Bad message payload", e);
         }
-        log.info("Received transcode message: videoId={}, appId={}", msg.getVideoId(), msg.getAppId());
+        log.info("[TRANSCODER] Received transcode message - videoId: {}, appId: {}", msg.getVideoId(), msg.getAppId());
         try {
             jobService.process(msg);
-            log.info("Transcode job finished: videoId={}", msg.getVideoId());
+            log.info("[TRANSCODER] Transcode job completed - videoId: {}", msg.getVideoId());
         } catch (Exception e) {
-            log.error("Transcode job failed: videoId={}", msg.getVideoId(), e);
+            log.error("[TRANSCODER] Transcode job failed - videoId: {}", msg.getVideoId(), e);
             try {
                 UpdateStreamsRequest failed = UpdateStreamsRequest.builder()
                         .status(VideoStatus.FAILED)
@@ -52,7 +52,7 @@ public class TranscodeListener {
                         .build();
                 catalogClient.updateStreams(msg.getVideoId(), failed).block();
             } catch (Exception ignore) {
-                log.warn("Failed to update catalog with FAILED status for videoId={}", msg.getVideoId());
+                log.warn("[TRANSCODER] Failed to update catalog with FAILED status - videoId: {}", msg.getVideoId());
             }
             // Reject and DO NOT requeue to avoid infinite retry loops
             throw new AmqpRejectAndDontRequeueException("Transcode failed", e);

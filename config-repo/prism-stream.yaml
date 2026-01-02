@@ -1,6 +1,9 @@
 logging:
   level:
     com.prism: DEBUG
+spring:
+  application:
+    name: prism-stream
 server:
   port: 8085 # Runs on 8085
 
@@ -18,3 +21,19 @@ minio:
 stream:
   redirect:
     enabled: false
+
+management:
+  tracing:
+    sampling:
+      probability: 1
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  observations:
+    key-values:
+      application: ${spring.application.name}

@@ -17,8 +17,10 @@ import com.prism.prism_auth.dto.ApiError;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -27,6 +29,10 @@ public class GlobalExceptionHandler {
         for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
             errors.put(fe.getField(), fe.getDefaultMessage());
         }
+
+        log.warn("[EXCEPTION] Validation failed - path: {}, errorCount: {}, errors: {}",
+                request.getRequestURI(), errors.size(), errors);
+
         ApiError body = ApiError.builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.BAD_REQUEST.value())
@@ -45,6 +51,10 @@ public class GlobalExceptionHandler {
         for (ConstraintViolation<?> cv : ex.getConstraintViolations()) {
             errors.put(String.valueOf(cv.getPropertyPath()), cv.getMessage());
         }
+
+        log.warn("[EXCEPTION] Constraint violation - path: {}, errorCount: {}, errors: {}",
+                request.getRequestURI(), errors.size(), errors);
+
         ApiError body = ApiError.builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.BAD_REQUEST.value())
@@ -62,6 +72,10 @@ public class GlobalExceptionHandler {
         HttpStatus status = "Invalid credentials".equalsIgnoreCase(ex.getMessage())
                 ? HttpStatus.UNAUTHORIZED
                 : HttpStatus.BAD_REQUEST;
+
+        log.warn("[EXCEPTION] IllegalArgumentException - path: {}, status: {}, message: {}",
+                request.getRequestURI(), status.value(), ex.getMessage());
+
         ApiError body = ApiError.builder()
                 .timestamp(Instant.now())
                 .status(status.value())
@@ -74,6 +88,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ApiError> handleIllegalState(IllegalStateException ex, HttpServletRequest request) {
+        log.warn("[EXCEPTION] IllegalStateException - path: {}, status: 403, message: {}",
+                request.getRequestURI(), ex.getMessage());
+
         ApiError body = ApiError.builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.FORBIDDEN.value())
@@ -86,6 +103,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<ApiError> handleNotFound(NoSuchElementException ex, HttpServletRequest request) {
+        log.warn("[EXCEPTION] NoSuchElementException - path: {}, status: 404, message: {}",
+                request.getRequestURI(), ex.getMessage());
+
         ApiError body = ApiError.builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.NOT_FOUND.value())
@@ -98,6 +118,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneric(Exception ex, HttpServletRequest request) {
+        log.error("[EXCEPTION] Unhandled exception - path: {}, status: 500, exceptionType: {}, message: {}",
+                request.getRequestURI(), ex.getClass().getName(), ex.getMessage(), ex);
+
         ApiError body = ApiError.builder()
                 .timestamp(Instant.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())

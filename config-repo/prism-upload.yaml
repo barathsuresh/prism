@@ -5,6 +5,8 @@ server:
   port: 8083 # Runs on port 8083
 
 spring:
+  application:
+    name: prism-upload
   codec:
     max-in-memory-size: 500MB # Only limits metadata/headers, not the file stream!
   rabbitmq:
@@ -21,3 +23,19 @@ minio:
   bucket: prism-videos
   region: us-east-1
   max-file-size: 5368709120 # 5GB
+
+management:
+  tracing:
+    sampling:
+      probability: 1
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  observations:
+    key-values:
+      application: ${spring.application.name}

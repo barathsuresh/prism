@@ -14,8 +14,10 @@ import com.prism.prism_auth.model.enums.UserStatus;
 import com.prism.prism_auth.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class UserService {
 
@@ -34,12 +36,14 @@ public class UserService {
         // Validation: Check if email already exists
         userRepository.findByEmailAndDeletedAtIsNull(request.getEmail())
                 .ifPresent(u -> {
+                    log.warn("[USER-SERVICE] Registration failed - email already in use: {}", request.getEmail());
                     throw new IllegalArgumentException("Email already in use");
                 });
 
         // Validation: Check if username already exists
         userRepository.findByUsername(request.getUsername())
                 .ifPresent(u -> {
+                    log.warn("[USER-SERVICE] Registration failed - username already in use: {}", request.getUsername());
                     throw new IllegalArgumentException("Username already in use");
                 });
 
@@ -67,7 +71,10 @@ public class UserService {
                 .build();
 
         // Save new user to database
-        return userRepository.save(user);
+        User saved = userRepository.save(user);
+        log.info("[USER-SERVICE] User registered - userId: {}, username: {}, email: {}", saved.getId(),
+                saved.getUsername(), saved.getEmail());
+        return saved;
     }
 
     /**
@@ -79,7 +86,10 @@ public class UserService {
      */
     public User findByUsername(String username) {
         return userRepository.findByUsernameAndDeletedAtIsNull(username)
-                .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
+                .orElseThrow(() -> {
+                    log.warn("[USER-SERVICE] User not found - username: {}", username);
+                    return new RuntimeException("User not found with username: " + username);
+                });
     }
 
     /**
@@ -91,7 +101,10 @@ public class UserService {
      */
     public User findByEmail(String email) {
         return userRepository.findByEmailAndDeletedAtIsNull(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+                .orElseThrow(() -> {
+                    log.warn("[USER-SERVICE] User not found - email: {}", email);
+                    return new RuntimeException("User not found with email: " + email);
+                });
     }
 
     /**
@@ -104,6 +117,9 @@ public class UserService {
     public User findById(String id) {
         return userRepository.findById(id)
                 .filter(user -> user.getDeletedAt() == null)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> {
+                    log.warn("[USER-SERVICE] User not found - userId: {}", id);
+                    return new RuntimeException("User not found with id: " + id);
+                });
     }
 }

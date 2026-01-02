@@ -19,7 +19,8 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(IllegalArgumentException.class)
         public ResponseEntity<ErrorResponse> handleIllegalArgument(
                         IllegalArgumentException ex, ServerWebExchange exchange) {
-                log.warn("Invalid argument: {}", ex.getMessage());
+                log.warn("[EXCEPTION] Invalid argument - path: {}, message: {}",
+                                exchange.getRequest().getPath().value(), ex.getMessage());
                 ErrorResponse error = ErrorResponse.builder()
                                 .timestamp(Instant.now())
                                 .status(HttpStatus.BAD_REQUEST.value())
@@ -33,7 +34,7 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(DuplicateUploadException.class)
         public ResponseEntity<ErrorResponse> handleDuplicateUpload(
                         DuplicateUploadException ex, ServerWebExchange exchange) {
-                log.warn("Duplicate upload blocked: {}", ex.getMessage());
+                log.warn("[EXCEPTION] Duplicate upload blocked - path: {}", exchange.getRequest().getPath().value());
                 ErrorResponse error = ErrorResponse.builder()
                                 .timestamp(Instant.now())
                                 .status(HttpStatus.CONFLICT.value())
@@ -50,7 +51,8 @@ public class GlobalExceptionHandler {
                 HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
                 if (status == null)
                         status = HttpStatus.INTERNAL_SERVER_ERROR;
-                log.warn("Downstream error: status={}, body={}", ex.getStatusCode().value(), ex.getResponseBodyAsString());
+                log.warn("[EXCEPTION] Downstream service error - status: {}, path: {}", ex.getStatusCode().value(),
+                                exchange.getRequest().getPath().value());
                 ErrorResponse error = ErrorResponse.builder()
                                 .timestamp(Instant.now())
                                 .status(status.value())
@@ -64,7 +66,7 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(WebExchangeBindException.class)
         public ResponseEntity<ErrorResponse> handleValidationException(
                         WebExchangeBindException ex, ServerWebExchange exchange) {
-                log.warn("Validation failed: {}", ex.getMessage());
+                log.warn("[EXCEPTION] Validation failed - path: {}", exchange.getRequest().getPath().value());
                 ErrorResponse error = ErrorResponse.builder()
                                 .timestamp(Instant.now())
                                 .status(HttpStatus.BAD_REQUEST.value())
@@ -78,7 +80,7 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ErrorResponse> handleGenericException(
                         Exception ex, ServerWebExchange exchange) {
-                log.error("Unexpected error", ex);
+                log.error("[EXCEPTION] Unexpected error - path: {}", exchange.getRequest().getPath().value(), ex);
                 ErrorResponse error = ErrorResponse.builder()
                                 .timestamp(Instant.now())
                                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())

@@ -23,26 +23,26 @@ import com.prism.prism_auth.service.AppService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * App Management Controller
- * 
  * Handles CRUD operations for developer applications
  * All endpoints require authentication (JWT)
  */
 @RestController
 @RequestMapping("/api/auth/apps")
 @RequiredArgsConstructor
+@Slf4j
 public class AppController {
 
     private final AppService appService;
 
     /**
      * Create a new app
-     * 
      * POST /api/apps
      * Requires: JWT authentication
-     * 
+     *
      * @param request     App creation request
      * @param userDetails Authenticated user
      * @return Created app details
@@ -52,13 +52,22 @@ public class AppController {
             @Valid @RequestBody AppRequest request,
             @AuthenticationPrincipal UserPrincipal userDetails) {
 
+        log.info("[APP] Create app request initiated - userId: {}, appName: {}",
+                userDetails.getId(), request.getName());
+
+        log.debug("[APP] Creating app - name: {}, description: {}, userId: {}",
+                request.getName(), request.getDescription(), userDetails.getId());
+
         App app = appService.createApp(request, userDetails.getId());
+
+        log.info("[APP] App created successfully - appId: {}, appName: {}, slug: {}, userId: {}",
+                app.getId(), app.getName(), app.getSlug(), userDetails.getId());
+
         return ResponseEntity.ok(mapToResponse(app));
     }
 
     /**
      * Update an existing app
-     * 
      * PUT /api/apps/{appId}
      * Requires: JWT authentication + ownership
      * 
@@ -73,13 +82,22 @@ public class AppController {
             @Valid @RequestBody AppUpdateRequest request,
             @AuthenticationPrincipal UserPrincipal userDetails) {
 
+        log.info("[APP] Update app request initiated - appId: {}, userId: {}",
+                appId, userDetails.getId());
+
+        log.debug("[APP] Updating app - appId: {}, newName: {}, userId: {}",
+                appId, request.getName(), userDetails.getId());
+
         App app = appService.updateApp(appId, request, userDetails.getId());
+
+        log.info("[APP] App updated successfully - appId: {}, appName: {}, userId: {}",
+                app.getId(), app.getName(), userDetails.getId());
+
         return ResponseEntity.ok(mapToResponse(app));
     }
 
     /**
      * Delete an app (soft delete)
-     * 
      * DELETE /api/apps/{appId}
      * Requires: JWT authentication + ownership
      * 
@@ -92,13 +110,19 @@ public class AppController {
             @PathVariable String appId,
             @AuthenticationPrincipal UserPrincipal userDetails) {
 
+        log.info("[APP] Delete app request initiated - appId: {}, userId: {}",
+                appId, userDetails.getId());
+
         appService.deleteApp(appId, userDetails.getId());
+
+        log.info("[APP] App deleted successfully - appId: {}, userId: {}",
+                appId, userDetails.getId());
+
         return ResponseEntity.noContent().build();
     }
 
     /**
      * Get a single app by ID
-     * 
      * GET /api/apps/{appId}
      * Requires: JWT authentication + ownership
      * 
@@ -111,13 +135,19 @@ public class AppController {
             @PathVariable String appId,
             @AuthenticationPrincipal UserPrincipal userDetails) {
 
+        log.info("[APP] Get app request - appId: {}, userId: {}",
+                appId, userDetails.getId());
+
         App app = appService.getApp(appId, userDetails.getId());
+
+        log.debug("[APP] App retrieved - appId: {}, appName: {}, userId: {}",
+                app.getId(), app.getName(), userDetails.getId());
+
         return ResponseEntity.ok(mapToResponse(app));
     }
 
     /**
      * List all apps for the authenticated user
-     * 
      * GET /api/apps
      * Requires: JWT authentication
      * 
@@ -128,17 +158,21 @@ public class AppController {
     public ResponseEntity<List<AppResponse>> listApps(
             @AuthenticationPrincipal UserPrincipal userDetails) {
 
+        log.info("[APP] List apps request - userId: {}", userDetails.getId());
+
         List<App> apps = appService.listUserApps(userDetails.getId());
         List<AppResponse> response = apps.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+
+        log.info("[APP] Apps listed successfully - userId: {}, appCount: {}",
+                userDetails.getId(), apps.size());
 
         return ResponseEntity.ok(response);
     }
 
     /**
      * Get a single app by slug
-     * 
      * GET /api/apps/slug/{slug}
      * Requires: JWT authentication + ownership
      * 
@@ -151,13 +185,19 @@ public class AppController {
             @PathVariable String slug,
             @AuthenticationPrincipal UserPrincipal userDetails) {
 
+        log.info("[APP] Get app by slug request - slug: {}, userId: {}",
+                slug, userDetails.getId());
+
         App app = appService.getAppBySlug(slug, userDetails.getId());
+
+        log.debug("[APP] App retrieved by slug - slug: {}, appId: {}, appName: {}, userId: {}",
+                slug, app.getId(), app.getName(), userDetails.getId());
+
         return ResponseEntity.ok(mapToResponse(app));
     }
 
     /**
      * Update an existing app by slug
-     * 
      * PUT /api/apps/slug/{slug}
      * Requires: JWT authentication + ownership
      * 
@@ -172,13 +212,22 @@ public class AppController {
             @Valid @RequestBody AppUpdateRequest request,
             @AuthenticationPrincipal UserPrincipal userDetails) {
 
+        log.info("[APP] Update app by slug request initiated - slug: {}, userId: {}",
+                slug, userDetails.getId());
+
+        log.debug("[APP] Updating app by slug - slug: {}, newName: {}, userId: {}",
+                slug, request.getName(), userDetails.getId());
+
         App app = appService.updateAppBySlug(slug, request, userDetails.getId());
+
+        log.info("[APP] App updated successfully by slug - slug: {}, appId: {}, appName: {}, userId: {}",
+                slug, app.getId(), app.getName(), userDetails.getId());
+
         return ResponseEntity.ok(mapToResponse(app));
     }
 
     /**
      * Delete an app by slug (soft delete)
-     * 
      * DELETE /api/apps/slug/{slug}
      * Requires: JWT authentication + ownership
      * 
@@ -191,7 +240,14 @@ public class AppController {
             @PathVariable String slug,
             @AuthenticationPrincipal UserPrincipal userDetails) {
 
+        log.info("[APP] Delete app by slug request initiated - slug: {}, userId: {}",
+                slug, userDetails.getId());
+
         appService.deleteAppBySlug(slug, userDetails.getId());
+
+        log.info("[APP] App deleted successfully by slug - slug: {}, userId: {}",
+                slug, userDetails.getId());
+
         return ResponseEntity.noContent().build();
     }
 

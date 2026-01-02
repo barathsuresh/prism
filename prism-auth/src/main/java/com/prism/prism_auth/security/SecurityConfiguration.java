@@ -69,6 +69,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/auth/internal/**").permitAll() // Allow internal service validation
                         .requestMatchers("/api/actuator/health").permitAll() // Allow health check
                         .requestMatchers("/api/auth/admin/**").hasRole("ADMIN") // Admin endpoints
+                        .requestMatchers("/actuator/**").permitAll() // Allow actuator endpoints
                         .anyRequest().authenticated() // Secure other endpoints
                 );
 

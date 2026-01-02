@@ -13,11 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.prism.prism_stream.service.StreamService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/api/stream")
 @RequiredArgsConstructor
+@Slf4j
 @ConditionalOnProperty(name = "stream.redirect.enabled", havingValue = "true", matchIfMissing = false)
 public class StreamController {
 
@@ -29,6 +31,7 @@ public class StreamController {
         @GetMapping("/videos/{videoId}/master")
         public Mono<ResponseEntity<Void>> getMaster(@RequestHeader("X-App-Id") String appId,
                         @PathVariable String videoId) {
+                log.info("[STREAM] Master playlist redirect - videoId: {}, appId: {}", videoId, appId);
                 return streamService.getMasterPlaylistUrl(appId, videoId)
                                 .map(url -> ResponseEntity.status(302)
                                                 .header(HttpHeaders.LOCATION, url)
@@ -42,6 +45,7 @@ public class StreamController {
         public Mono<ResponseEntity<Void>> getThumbnail(@RequestHeader("X-App-Id") String appId,
                         @PathVariable String videoId,
                         @RequestParam(defaultValue = "medium") String size) {
+                log.info("[STREAM] Thumbnail redirect - videoId: {}, size: {}, appId: {}", videoId, size, appId);
                 return streamService.getThumbnailUrl(appId, videoId, size)
                                 .map(url -> ResponseEntity.status(302)
                                                 .header(HttpHeaders.LOCATION, url)
@@ -53,6 +57,7 @@ public class StreamController {
          */
         @GetMapping("/public/videos/{videoId}/master")
         public Mono<ResponseEntity<Void>> getPublicMaster(@PathVariable String videoId) {
+                log.info("[STREAM] Public master playlist redirect - videoId: {}", videoId);
                 return streamService.getPublicMasterPlaylistUrl(videoId)
                                 .map(url -> ResponseEntity.status(302)
                                                 .header(HttpHeaders.LOCATION, url)
@@ -65,6 +70,7 @@ public class StreamController {
         @GetMapping("/public/videos/{videoId}/thumbnail")
         public Mono<ResponseEntity<Void>> getPublicThumbnail(@PathVariable String videoId,
                         @RequestParam(defaultValue = "medium") String size) {
+                log.info("[STREAM] Public thumbnail redirect - videoId: {}, size: {}", videoId, size);
                 return streamService.getPublicThumbnailUrl(videoId, size)
                                 .map(url -> ResponseEntity.status(302)
                                                 .header(HttpHeaders.LOCATION, url)
