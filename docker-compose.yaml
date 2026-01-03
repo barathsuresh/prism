@@ -3,6 +3,9 @@ services:
   mongo:
     image: mongo:latest
     container_name: prism-mongo
+    profiles:
+      - infra
+      - app
     ports:
       - "27017:27017"
     volumes:
@@ -14,6 +17,9 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     container_name: prism-rabbitmq
+    profiles:
+      - infra
+      - app
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -29,6 +35,9 @@ services:
   minio:
     image: minio/minio
     container_name: prism-minio
+    profiles:
+      - infra
+      - app
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -45,6 +54,9 @@ services:
   zipkin:
     image: openzipkin/zipkin
     container_name: prism-zipkin
+    profiles:
+      - infra
+      - app
     ports:
       - "9411:9411"
     networks:
@@ -54,6 +66,9 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prism-prometheus
+    profiles:
+      - infra
+      - app
     ports:
       - "9090:9090"
     volumes:
@@ -69,6 +84,9 @@ services:
   loki:
     image: grafana/loki:latest
     container_name: prism-loki
+    profiles:
+      - infra
+      - app
     ports:
       - "3100:3100"
     volumes:
@@ -81,6 +99,9 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: prism-grafana
+    profiles:
+      - infra
+      - app
     ports:
       - "3000:3000"
     environment:
@@ -106,9 +127,13 @@ services:
       context: ./prism-discovery
       dockerfile: Dockerfile
     container_name: prism-discovery
+    profiles:
+      - infra
+      - app
     ports:
       - "8761:8761"
     environment:
+      LOKI_URL: ${LOKI_URL}
       SPRING_APPLICATION_NAME: prism-discovery
       EUREKA_CLIENT_REGISTERWITEUREKA: "false"
       EUREKA_CLIENT_FETCHREGISTRY: "false"
@@ -127,9 +152,13 @@ services:
       context: ./prism-config
       dockerfile: Dockerfile
     container_name: prism-config
+    profiles:
+      - infra
+      - app
     ports:
       - "8888:8888"
     environment:
+      LOKI_URL: ${LOKI_URL}
       SPRING_APPLICATION_NAME: prism-config
       SPRING_CLOUD_CONFIG_SERVER_GIT_URI: file:///app/config-repo
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://${EUREKA_HOST}:${EUREKA_PORT}/eureka/
@@ -153,13 +182,15 @@ services:
       context: ./prism-gateway
       dockerfile: Dockerfile
     container_name: prism-gateway
+    profiles:
+      - app
     ports:
       - "8080:8080"
     environment:
       SPRING_APPLICATION_NAME: prism-gateway
       SPRING_CLOUD_CONFIG_URI: http://prism-config:8888
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://${EUREKA_HOST}:${EUREKA_PORT}/eureka/
-      MONGO_URI: mongodb://mongo:27017/prism-gateway-db
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017}
       RABBITMQ_HOST: ${RABBITMQ_HOST}
       RABBITMQ_PORT: ${RABBITMQ_PORT}
       RABBITMQ_USER: ${RABBITMQ_USER}
@@ -201,13 +232,15 @@ services:
       context: ./prism-auth
       dockerfile: Dockerfile
     container_name: prism-auth
+    profiles:
+      - app
     ports:
       - "8081:8081"
     environment:
       SPRING_APPLICATION_NAME: prism-auth
       SPRING_CLOUD_CONFIG_URI: http://prism-config:8888
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://${EUREKA_HOST}:${EUREKA_PORT}/eureka/
-      MONGO_URI: mongodb://mongo:27017/prism-auth-db
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017}
       RABBITMQ_HOST: ${RABBITMQ_HOST}
       RABBITMQ_PORT: ${RABBITMQ_PORT}
       RABBITMQ_USER: ${RABBITMQ_USER}
@@ -244,13 +277,15 @@ services:
       context: ./prism-catalog
       dockerfile: Dockerfile
     container_name: prism-catalog
+    profiles:
+      - app
     ports:
       - "8082:8082"
     environment:
       SPRING_APPLICATION_NAME: prism-catalog
       SPRING_CLOUD_CONFIG_URI: http://prism-config:8888
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://${EUREKA_HOST}:${EUREKA_PORT}/eureka/
-      MONGO_URI: mongodb://mongo:27017/prism-catalog-db
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017}
       RABBITMQ_HOST: ${RABBITMQ_HOST}
       RABBITMQ_PORT: ${RABBITMQ_PORT}
       RABBITMQ_USER: ${RABBITMQ_USER}
@@ -286,13 +321,15 @@ services:
       context: ./prism-upload
       dockerfile: Dockerfile
     container_name: prism-upload
+    profiles:
+      - app
     ports:
       - "8083:8083"
     environment:
       SPRING_APPLICATION_NAME: prism-upload
       SPRING_CLOUD_CONFIG_URI: http://prism-config:8888
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://${EUREKA_HOST}:${EUREKA_PORT}/eureka/
-      MONGO_URI: mongodb://mongo:27017/prism-upload-db
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017}
       RABBITMQ_HOST: ${RABBITMQ_HOST}
       RABBITMQ_PORT: ${RABBITMQ_PORT}
       RABBITMQ_USER: ${RABBITMQ_USER}
@@ -339,13 +376,15 @@ services:
       context: ./prism-transcoder
       dockerfile: Dockerfile
     container_name: prism-transcoder
+    profiles:
+      - app
     ports:
       - "8084:8084"
     environment:
       SPRING_APPLICATION_NAME: prism-transcoder
       SPRING_CLOUD_CONFIG_URI: http://prism-config:8888
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://${EUREKA_HOST}:${EUREKA_PORT}/eureka/
-      MONGO_URI: mongodb://mongo:27017/prism-transcoder-db
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017}
       RABBITMQ_HOST: ${RABBITMQ_HOST}
       RABBITMQ_PORT: ${RABBITMQ_PORT}
       RABBITMQ_USER: ${RABBITMQ_USER}
@@ -384,13 +423,15 @@ services:
       context: ./prism-stream
       dockerfile: Dockerfile
     container_name: prism-stream
+    profiles:
+      - app
     ports:
       - "8085:8085"
     environment:
       SPRING_APPLICATION_NAME: prism-stream
       SPRING_CLOUD_CONFIG_URI: http://prism-config:8888
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://${EUREKA_HOST}:${EUREKA_PORT}/eureka/
-      MONGO_URI: mongodb://mongo:27017/prism-stream-db
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017}
       RABBITMQ_HOST: ${RABBITMQ_HOST}
       RABBITMQ_PORT: ${RABBITMQ_PORT}
       RABBITMQ_USER: ${RABBITMQ_USER}

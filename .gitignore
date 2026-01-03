@@ -11,8 +11,9 @@ out/
 hs_err_pid*
 *.orig
 *.rej
-
+.vscode/
 # Environment files
 .env
+.env.local
 DUPLICATE_UPLOAD_PREVENTION.md
 MIGRATION_SUMMARY.md

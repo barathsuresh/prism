@@ -8,7 +8,7 @@ spring:
   application:
     name: prism-upload
   mongodb:
-    uri: ${MONGO_URI:mongodb://localhost:27017/prism-upload-db}
+    uri: ${MONGO_URI:mongodb://localhost:27017}/prism-upload-db
   codec:
     max-in-memory-size: 500MB # Only limits metadata/headers, not the file stream!
   rabbitmq:
@@ -30,7 +30,7 @@ management:
   tracing:
     export:
       zipkin:
-        endpoint: ${MANAGEMENT_TRACING_EXPORT_ZIPKIN_ENDPOINT:http://zipkin:9411/api/v2/spans}
+        endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
     sampling:
       probability: 1
   endpoints:
