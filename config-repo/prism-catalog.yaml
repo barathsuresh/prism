@@ -8,13 +8,16 @@ spring:
   application:
     name: prism-catalog
   mongodb:
-    uri: mongodb://localhost:27017/prism-catalog-db
+    uri: ${MONGO_URI:mongodb://localhost:27017/prism-catalog-db}
   data:
     mongodb:
-      auto-index-creation: true # Automatically create indexes from @CompoundIndex annotations
+      auto-index-creation: true
 
 management:
   tracing:
+    export:
+      zipkin:
+        endpoint: ${MANAGEMENT_TRACING_EXPORT_ZIPKIN_ENDPOINT:http://zipkin:9411/api/v2/spans}
     sampling:
       probability: 1
   endpoints:

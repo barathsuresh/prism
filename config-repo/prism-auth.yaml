@@ -8,7 +8,7 @@ spring:
   application:
     name: prism-auth
   mongodb:
-    uri: mongodb://localhost:27017/prism-auth-db
+    uri: ${MONGO_URI:mongodb://localhost:27017/prism-auth-db}
 
   # JWT configuration for prism-auth service
 app:
@@ -18,13 +18,12 @@ app:
     issuer: prism-auth
     audience: prism
     expiration: 86400s # 24 hours (Spring Duration format)
-    refreshExpiration: 604800s # 7 days (Spring Duration format)
-    clockSkew: 60s # allowed clock skew in seconds (Spring Duration format)
-    tokenPrefix: Bearer
-    header: Authorization
 
 management:
   tracing:
+    export:
+      zipkin:
+        endpoint: ${MANAGEMENT_TRACING_EXPORT_ZIPKIN_ENDPOINT:http://zipkin:9411/api/v2/spans}
     sampling:
       probability: 1
   endpoints:

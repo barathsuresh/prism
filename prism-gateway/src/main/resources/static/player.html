@@ -79,63 +79,9 @@
         width: 100%;
         border-radius: 10px;
         border: 1px solid var(--border);
-        background: #0b1c2c;
-        color: var(--text);
-        padding: 12px 14px;
-        font-size: 15px;
-      }
-      input:focus,
-      button:focus {
-        outline: 2px solid var(--accent);
-        outline-offset: 2px;
-      }
-      button {
-        background: linear-gradient(135deg, var(--accent), #15c187);
-        border: none;
-        font-weight: 600;
-        cursor: pointer;
-        transition: transform 120ms ease, box-shadow 120ms ease;
-      }
-      button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 8px 20px rgba(31, 158, 109, 0.35);
-      }
-      .row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-      .checkbox {
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        padding: 10px;
         color: var(--muted);
         font-size: 14px;
-      }
-      .checkbox input {
-        width: auto;
-        accent-color: var(--accent);
-      }
-      .status {
-        margin: 18px 0;
-        padding: 14px 16px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        background: #0c2032;
-        color: var(--muted);
-        min-height: 44px;
-      }
-      .status.negative {
-        border-color: var(--danger);
-        color: #ffd6d6;
-        background: rgba(242, 95, 92, 0.08);
-      }
-      video {
-        width: 100%;
-        margin-top: 10px;
-        background: #06101b;
-        border: 1px solid var(--border);
-        border-radius: 14px;
       }
       .meta {
         display: flex;
@@ -216,7 +162,14 @@
 
       <div id="status" class="status">Waiting for input.</div>
 
-      <video id="player" controls playsinline></video>
+      <video
+        id="player"
+        controls
+        playsinline
+        preload="auto"
+        crossorigin="anonymous"
+        webkit-playsinline
+      ></video>
 
       <div class="meta" id="meta"></div>
     </main>
@@ -273,77 +226,91 @@
           setStatus("Please enter a video ID.", true);
           return;
         }
-        if (!isPublic && !apiKey) {
-          setStatus("Provide an API key or switch to public mode.", true);
-          return;
-        }
-
-        const endpoint = buildEndpoint(baseUrl, videoId, isPublic);
-        cleanupPlayer();
-        setStatus(`Requesting manifest from ${endpoint}`);
-        setMeta([`Mode: ${isPublic ? "public" : "private"}`]);
-
-        try {
-          if (Hls.isSupported()) {
-            hlsInstance = new Hls({
-              xhrSetup: (xhr) => {
-                if (!isPublic && apiKey) {
-                  xhr.setRequestHeader("X-API-Key", apiKey);
-                }
-              },
-              maxBufferLength: 30, // Buffer up to 30 seconds
-              maxMaxBufferLength: 60, // Absolute max 60 seconds
-              capLevelOnFPSDrop: true, // Reduce quality if FPS drops
-              lowLatencyMode: false, // Standard HLS, not low-latency
-              abrEwmaFastLive: 5000, // Fast adaptation on live streams (5s window)
-              abrEwmaSlowLive: 9000, // Slow adaptation for stability
-            });
-
-            hlsInstance.on(Hls.Events.ERROR, (event, data) => {
-              setStatus(
-                `Playback error: ${data?.details || data?.type || "unknown"}`,
-                true
-              );
-            });
-
-            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-              setStatus("Manifest loaded. Starting playback...");
-              videoEl
-                .play()
-                .catch(() =>
-                  setStatus("Manifest loaded. Press play to start.", false)
-                );
-            });
-
-            hlsInstance.loadSource(endpoint);
-            hlsInstance.attachMedia(videoEl);
-            setMeta([
-              `Mode: ${isPublic ? "public" : "private"}`,
-              `Proxy endpoint: ${endpoint}`,
-            ]);
-          } else {
-            // Native HLS (Safari): stream directly from proxy endpoint
-            videoEl.src = endpoint;
-            await videoEl.play();
-            setStatus("Streaming via native HLS (proxy endpoint).");
-            setMeta([
-              `Mode: ${isPublic ? "public" : "private"}`,
-              `Proxy endpoint: ${endpoint}`,
-            ]);
+        form.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const videoId = videoIdInput.value.trim();
+          const apiKey = apiKeyInput.value.trim();
+          const isPublic = publicToggle.checked;
+          const baseUrl = baseInput.value.trim() || window.location.origin;
+  
+          if (!videoId) {
+            setStatus("Please enter a video ID.", true);
+            return;
           }
-        } catch (err) {
-          console.error(err);
-          setStatus(err.message || "Unable to start playback.", true);
-        }
-      });
-
-      // Default base URL to current origin on load
-      baseInput.value = window.location.origin;
-      publicToggle.addEventListener("change", () => {
-        apiKeyInput.disabled = publicToggle.checked;
-        if (publicToggle.checked) {
-          apiKeyInput.value = "";
-        }
+          if (!isPublic && !apiKey) {
+            setStatus("Provide an API key or switch to public mode.", true);
+            return;
+          }
+  
+          const endpoint = buildEndpoint(baseUrl, videoId, isPublic);
+          cleanupPlayer();
+          setStatus(`Requesting manifest from ${endpoint}`);
+          setMeta([`Mode: ${isPublic ? "public" : "private"}`]);
+  
+          try {
+            if (Hls.isSupported()) {
+              // Minimal, single-level playback (no ABR, no worker)
+              hlsInstance = new Hls({
+                debug: true,
+                enableWorker: false,
+                autoStartLoad: true,
+                startLevel: -1,
+                xhrSetup: (xhr) => {
+                  if (!isPublic && apiKey) {
+                    xhr.setRequestHeader("X-API-Key", apiKey);
+                  }
+                },
+              });
+  
+              hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                const levels = hlsInstance.levels || [];
+                const targetLevel = levels.length ? levels.length - 1 : -1; // highest available
+                hlsInstance.autoLevelEnabled = false;
+                hlsInstance.startLevel = targetLevel;
+                hlsInstance.nextLevel = targetLevel;
+                hlsInstance.currentLevel = targetLevel;
+                setStatus("Manifest loaded. Starting playback...");
+                videoEl.volume = 1.0;
+                videoEl.muted = false;
+                videoEl
+                  .play()
+                  .catch(() =>
+                    setStatus("Manifest loaded. Press play to start.", false)
+                  );
+              });
+  
+              hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+                console.error("HLS Error:", data);
+                if (data.fatal) {
+                  hlsInstance.destroy();
+                  setStatus(
+                    `Fatal error: ${data?.details || data?.type || "unknown"}`,
+                    true
+                  );
+                }
+              });
+  
+              hlsInstance.loadSource(endpoint);
+              hlsInstance.attachMedia(videoEl);
+              setMeta([
+                `Mode: ${isPublic ? "public" : "private"}`,
+                `Proxy endpoint: ${endpoint}`,
+              ]);
+            } else {
+              // Native HLS (Safari): stream directly from proxy endpoint
+              videoEl.src = endpoint;
+              await videoEl.play();
+              setStatus("Streaming via native HLS (proxy endpoint).");
+              setMeta([
+                `Mode: ${isPublic ? "public" : "private"}`,
+                `Proxy endpoint: ${endpoint}`,
+              ]);
+            }
+          } catch (err) {
+            console.error(err);
+            setStatus(`Error: ${err.message || err}`, true);
+          }
+        });
       });
     </script>
   </body>

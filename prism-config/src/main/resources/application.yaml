@@ -7,21 +7,30 @@ spring:
     config:
       server:
         native:
-#          search-locations: file:${user.dir}/../config-repo
-            search-locations: file:D://Spring Boot Projects//prism//config-repo
+          #          search-locations: file:${user.dir}/../config-repo
+          search-locations: ${SPRING_CLOUD_CONFIG_SERVER_GIT_URI:file:D://Spring Boot Projects//prism//config-repo}
 server:
   port: 8888
 
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
 management:
+  tracing:
+    export:
+      zipkin:
+        endpoint: ${MANAGEMENT_TRACING_EXPORT_ZIPKIN_ENDPOINT:http://zipkin:9411/api/v2/spans}
+    sampling:
+      probability: 1
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
-  prometheus: 
+        include: "*"
+  prometheus:
     metrics:
       export:
         enabled: true
   observations:
     key-values:
       application: ${spring.application.name}
-

@@ -8,12 +8,12 @@ spring:
   application:
     name: prism-transcoder
   mongodb:
-    uri: mongodb://localhost:27017/prism-transcoder-db
+    uri: ${MONGO_URI:mongodb://localhost:27017/prism-transcoder-db}
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
 
 # Custom Config
 transcoder:
@@ -24,41 +24,44 @@ transcoder:
       - quality: 144p
         height: 144
         videoBitrate: 200k
-        audioBitrate: 64k
+        audioBitrate: 128k
         bandwidthKbps: 200
       - quality: 240p
         height: 240
         videoBitrate: 400k
-        audioBitrate: 64k
+        audioBitrate: 128k
         bandwidthKbps: 400
       - quality: 360p
         height: 360
         videoBitrate: 800k
-        audioBitrate: 96k
+        audioBitrate: 160k
         bandwidthKbps: 800
       - quality: 480p
         height: 480
         videoBitrate: 1400k
-        audioBitrate: 128k
+        audioBitrate: 192k
         bandwidthKbps: 1400
       - quality: 720p
         height: 720
         videoBitrate: 2800k
-        audioBitrate: 128k
+        audioBitrate: 256k
         bandwidthKbps: 2800
       - quality: 1080p
         height: 1080
         videoBitrate: 5000k
-        audioBitrate: 192k
+        audioBitrate: 320k
         bandwidthKbps: 5000
 
 minio:
-  url: http://localhost:9000
-  access-key: minioadmin
-  secret-key: minioadmin
+  url: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
   bucket-name: prism-videos
 
 management:
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
   tracing:
     sampling:
       probability: 1

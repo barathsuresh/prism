@@ -3,9 +3,28 @@ spring:
     name: prism-discovery
 server:
   port: 8761
+
 eureka:
   client:
-    register-with-eureka: false
-    fetch-registry: false
+    register-with-eureka: ${EUREKA_CLIENT_REGISTERWITEUREKA:false}
+    fetch-registry: ${EUREKA_CLIENT_FETCHREGISTRY:false}
   server:
     wait-time-in-ms-when-sync-empty: 0 # don't wait when sync is empty
+management:
+  tracing:
+    export:
+      zipkin:
+        endpoint: ${MANAGEMENT_TRACING_EXPORT_ZIPKIN_ENDPOINT:http://zipkin:9411/api/v2/spans}
+    sampling:
+      probability: 1
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  observations:
+    key-values:
+      application: ${spring.application.name}

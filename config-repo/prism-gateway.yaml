@@ -1,14 +1,20 @@
 logging:
   level:
     com.prism: DEBUG
+
 spring:
   application:
     name: prism-gateway
+  mongodb:
+    uri: ${MONGO_URI:mongodb://localhost:27017/prism-gateway-db}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
 example:
   message: "Hello from the Config Server!"
-
-# NOTE: Routes are defined via @Bean in PrismGatewayApplication.java
-# Do NOT use spring.cloud.gateway.routes property here
 
 # API key enforcement configuration (used by ApiKeyValidationFilter global filter)
 gateway:
@@ -74,6 +80,9 @@ gateway:
 
 management:
   tracing:
+    export:
+      zipkin:
+        endpoint: ${MANAGEMENT_TRACING_EXPORT_ZIPKIN_ENDPOINT:http://zipkin:9411/api/v2/spans}
     sampling:
       probability: 1
   endpoints:

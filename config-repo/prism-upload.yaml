@@ -7,25 +7,30 @@ server:
 spring:
   application:
     name: prism-upload
+  mongodb:
+    uri: ${MONGO_URI:mongodb://localhost:27017/prism-upload-db}
   codec:
     max-in-memory-size: 500MB # Only limits metadata/headers, not the file stream!
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
 
 # MinIO Configuration
 minio:
-  endpoint: http://localhost:9000
-  access-key: minioadmin
-  secret-key: minioadmin
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
   bucket: prism-videos
   region: us-east-1
   max-file-size: 5368709120 # 5GB
 
 management:
   tracing:
+    export:
+      zipkin:
+        endpoint: ${MANAGEMENT_TRACING_EXPORT_ZIPKIN_ENDPOINT:http://zipkin:9411/api/v2/spans}
     sampling:
       probability: 1
   endpoints:

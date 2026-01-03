@@ -1,17 +1,26 @@
 logging:
   level:
     com.prism: DEBUG
+
 spring:
   application:
     name: prism-stream
+  mongodb:
+    uri: ${MONGO_URI:mongodb://localhost:27017/prism-stream-db}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
 server:
   port: 8085 # Runs on 8085
 
 # Custom MinIO Config
 minio:
-  endpoint: http://localhost:9000
-  access-key: minioadmin
-  secret-key: minioadmin
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
   bucket: prism-videos
   region: us-east-1
   max-file-size: 5368709120 # 5GB
@@ -24,6 +33,9 @@ stream:
 
 management:
   tracing:
+    export:
+      zipkin:
+        endpoint: ${MANAGEMENT_TRACING_EXPORT_ZIPKIN_ENDPOINT:http://zipkin:9411/api/v2/spans}
     sampling:
       probability: 1
   endpoints:
