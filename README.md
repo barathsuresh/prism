@@ -125,3 +125,4 @@ GET http://localhost:8080/api/stream/{videoId}/master.m3u8
 _Note: The Stream Service will act as a proxy, fetching secure content from MinIO and serving it to the player._
 
 ---
+
