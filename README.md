@@ -48,7 +48,7 @@ Unlike simple S3 redirects, Prism uses a **Reactive Stream Service (Spring WebFl
 
 ## 🛠️ Tech Stack
 
-- **Core:** Java 21, Spring Boot 3.4, Spring Cloud (Gateway, OpenFeign, Eureka).
+- **Core:** Java 21, Spring Boot 3.4, Spring Cloud (Gateway, Eureka).
 - **Reactive:** Spring WebFlux (for Stream Service).
 - **Data:** MongoDB (Per-service databases), Redis (Caching).
 - **Messaging:** RabbitMQ (Event-driven architecture).
