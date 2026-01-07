@@ -59,10 +59,10 @@ minio:
   bucket-name: prism-videos
 
 management:
-  zipkin:
-    tracing:
-      endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
   tracing:
+    export:
+      zipkin:
+        endpoint: ${MANAGEMENT_ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
     sampling:
       probability: 1
   endpoints:
