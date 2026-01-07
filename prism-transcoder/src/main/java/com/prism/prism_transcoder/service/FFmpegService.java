@@ -70,16 +70,26 @@ public class FFmpegService {
         cmd.add(inputFile.toAbsolutePath().toString());
         cmd.add("-vf");
         cmd.add("scale=-2:" + height);
+
+        // Video Settings
         cmd.add("-c:v");
         cmd.add("libx264");
         cmd.add("-preset");
         cmd.add("veryfast");
         cmd.add("-b:v");
         cmd.add(vBitrate);
+
+        // Audio Settings (FIXED FOR DOCKER ROBOTIC NOISE)
         cmd.add("-c:a");
-        cmd.add("aac");
+        cmd.add("aac"); // Native AAC encoder
         cmd.add("-b:a");
         cmd.add(aBitrate);
+        cmd.add("-ac");
+        cmd.add("2"); // Force Stereo (Prevents mono phase issues)
+        cmd.add("-ar");
+        cmd.add("44100"); // Force 44.1kHz (Prevents aliasing/robotic sounds)
+
+        // HLS Settings
         cmd.add("-hls_time");
         cmd.add("6");
         cmd.add("-hls_list_size");
