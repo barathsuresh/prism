@@ -12,12 +12,20 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Stage 2: Runtime
-FROM eclipse-temurin:21-jre-jammy
+FROM ubuntu:22.04
 
 WORKDIR /app
 
-# Install FFmpeg for transcoding
-RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
+# Install Java 21 and FFmpeg from official Ubuntu repos
+RUN apt-get update && \
+    apt-get install -y \
+    openjdk-21-jre-headless \
+    ffmpeg \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Verify FFmpeg installation
+RUN ffmpeg -version
 
 # Copy JAR from builder stage
 COPY --from=builder /app/target/prism-transcoder-*.jar app.jar
@@ -29,5 +37,5 @@ EXPOSE 8084
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8084/actuator/health || exit 1
 
-# Run the application with JVM memory limits
-ENTRYPOINT ["java", "-Xms512m", "-Xmx1536m", "-XX:+UseG1GC", "-XX:MaxGCPauseMillis=200", "-jar", "app.jar"]
+# Run the application with increased memory for transcoding
+ENTRYPOINT ["java", "-Xms1024m", "-Xmx3072m", "-XX:+UseG1GC", "-XX:MaxGCPauseMillis=200", "-jar", "app.jar"]
