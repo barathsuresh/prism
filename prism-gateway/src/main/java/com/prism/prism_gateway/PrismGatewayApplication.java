@@ -1,5 +1,7 @@
 package com.prism.prism_gateway;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -11,9 +13,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.web.reactive.function.client.WebClient;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @SpringBootApplication
 @EnableDiscoveryClient
@@ -46,7 +45,7 @@ public class PrismGatewayApplication {
                 }
         }
 
-        // This is the "Java Way" to define routes (from the guide)
+
         @Bean
         public RouteLocator myRoutes(RouteLocatorBuilder builder) {
                 return builder.routes()

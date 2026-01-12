@@ -16,6 +16,27 @@ spring:
 example:
   message: "Hello from the Config Server!"
 
+springdoc:
+  swagger-ui:
+    # This disables the default petstore URL
+    disable-swagger-default-url: true
+    path: swagger.html
+    # List all your microservices here
+    urls:
+      - name: Auth Service
+        url: /api/auth/v3/api-docs
+      - name: Upload Service
+        url: /api/upload/v3/api-docs
+      - name: Catalog Service
+        url: /api/catalog/v3/api-docs
+      - name: Stream Service
+        url: /api/stream/v3/api-docs
+      - name: Transcoder Service
+        url: /api/transcoder/v3/api-docs
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+
 # API key enforcement configuration (used by ApiKeyValidationFilter global filter)
 gateway:
   apikey:
@@ -23,6 +44,10 @@ gateway:
     enforcement:
       # All internal service-to-service endpoints (no API key required)
       - path: /api/**/internal/**
+        scopes: [ ]
+
+      # All API docs endpoints (no API key required)
+      - path: /api/**/v3/api-docs
         scopes: []
 
       # Public catalog endpoints (no API key required)

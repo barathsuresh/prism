@@ -21,6 +21,13 @@ app:
     audience: prism
     expiration: 86400s # 24 hours (Spring Duration format)
 
+springdoc:
+  swagger-ui:
+    path: /api/auth/v3/swagger-ui.html
+  api-docs:
+    enabled: true
+    path: /api/auth/v3/api-docs
+
 management:
   tracing:
     export:
