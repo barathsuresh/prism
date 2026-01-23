@@ -16,6 +16,27 @@ spring:
 example:
   message: "Hello from the Config Server!"
 
+springdoc:
+  swagger-ui:
+    # This disables the default petstore URL
+    disable-swagger-default-url: true
+    path: swagger.html
+    # List all your microservices here
+    urls:
+      - name: Auth Service
+        url: /api/auth/v3/api-docs
+      - name: Upload Service
+        url: /api/upload/v3/api-docs
+      - name: Catalog Service
+        url: /api/catalog/v3/api-docs
+      - name: Stream Service
+        url: /api/stream/v3/api-docs
+      - name: Transcoder Service
+        url: /api/transcoder/v3/api-docs
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+
 # API key enforcement configuration (used by ApiKeyValidationFilter global filter)
 gateway:
   apikey:
@@ -27,60 +48,60 @@ gateway:
 
       # All API docs endpoints (no API key required)
       - path: /api/**/v3/api-docs
-        scopes: []
+        scopes: [ ]
 
       # Public catalog endpoints (no API key required)
       - path: /api/catalog/videos/public/**
-        scopes: []
+        scopes: [ ]
 
       # Public stream endpoints (no API key required)
       - path: /api/stream/public/**
         method: GET
-        scopes: []
+        scopes: [ ]
 
       # Smart proxy public endpoints (no API key required)
       - path: /stream/public/**
         method: GET
-        scopes: []
+        scopes: [ ]
 
       # Upload progress endpoint (no API key required for SSE)
       - path: /api/upload/**/progress
         method: GET
-        scopes: []
+        scopes: [ ]
 
       # Upload service - write operations (videos:upload scope)
       - path: /api/upload/**
         method: POST
-        scopes: ["videos:upload"]
+        scopes: [ "videos:upload" ]
       - path: /api/upload/**
         method: PUT
-        scopes: ["videos:upload"]
+        scopes: [ "videos:upload" ]
 
       # Catalog service - read operations (catalog:read scope)
       - path: /api/catalog/videos/**
         method: GET
-        scopes: ["catalog:read"]
+        scopes: [ "catalog:read" ]
 
       # Catalog service - write operations (catalog:write scope)
       - path: /api/catalog/videos/**
         method: POST
-        scopes: ["catalog:write"]
+        scopes: [ "catalog:write" ]
       - path: /api/catalog/videos/**
         method: PUT
-        scopes: ["catalog:write"]
+        scopes: [ "catalog:write" ]
       - path: /api/catalog/videos/**
         method: DELETE
-        scopes: ["catalog:write"]
+        scopes: [ "catalog:write" ]
 
       # Stream service - read only (videos:read scope)
       - path: /api/stream/**
         method: GET
-        scopes: ["videos:read"]
+        scopes: [ "videos:read" ]
 
       # Smart proxy private endpoints - read only (videos:read scope)
       - path: /stream/**
         method: GET
-        scopes: ["videos:read"]
+        scopes: [ "videos:read" ]
 
 management:
   tracing:

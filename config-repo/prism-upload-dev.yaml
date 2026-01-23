@@ -1,23 +1,30 @@
 logging:
   level:
     com.prism: DEBUG
+server:
+  port: 8083 # Runs on port 8083
 
 spring:
   application:
-    name: prism-stream
+    name: prism-upload
   mongodb:
-    uri: ${MONGO_URI:mongodb://localhost:27017}/prism-stream-db
+    uri: ${MONGO_URI:mongodb://localhost:27017}/prism-upload-db
+  codec:
+    max-in-memory-size: 500MB # Only limits metadata/headers, not the file stream!
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASSWORD:guest}
 
+springdoc:
+  swagger-ui:
+    path: /api/upload/v3/swagger-ui.html
+  api-docs:
+    enabled: true
+    path: /api/upload/v3/api-docs
 
-server:
-  port: 8085 # Runs on 8085
-
-# Custom MinIO Config
+# MinIO Configuration
 minio:
   endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
   access-key: ${MINIO_ACCESS_KEY:minioadmin}
@@ -25,12 +32,6 @@ minio:
   bucket: prism-videos
   region: us-east-1
   max-file-size: 5368709120 # 5GB
-  presigned-url-expiration-minutes: 720 # 12 hours
-
-# enable or disable stream redirection to minio presigned URLs
-stream:
-  redirect:
-    enabled: false
 
 management:
   tracing:

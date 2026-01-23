@@ -17,12 +17,6 @@ spring:
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASSWORD:guest}
 
-springdoc:
-  swagger-ui:
-    path: /api/upload/v3/swagger-ui.html
-  api-docs:
-    enabled: true
-    path: /api/upload/v3/api-docs
 
 # MinIO Configuration
 minio:
