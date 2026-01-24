@@ -1,6 +1,7 @@
 package com.prism.prism_auth.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.prism.prism_auth.model.enums.UserRole;
 import com.prism.prism_auth.model.enums.UserStatus;
@@ -54,7 +55,7 @@ public class UserResponse {
     /**
      * User role (DEVELOPER or ADMIN)
      */
-    private UserRole role;
+    private List<UserRole> roles;
 
     /**
      * Whether email is verified

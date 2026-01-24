@@ -84,8 +84,8 @@ public class JwtProvider {
                 .signWith(getSigningKey()) // Sign with secret key
                 .compact();
 
-        log.debug("[JWT] JWT token generated successfully - userId: {}, username: {}, expiresIn: {}ms",
-                userDetails.getId(), username, jwtProperties.getExpiration().toMillis());
+        log.debug("[JWT] JWT token generated successfully - userId: {}, username: {}, expiresIn: {}ms, roles: {}",
+                userDetails.getId(), username, jwtProperties.getExpiration().toMillis(), roles);
 
         return token;
     }

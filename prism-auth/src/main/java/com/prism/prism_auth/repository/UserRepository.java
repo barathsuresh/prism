@@ -2,7 +2,10 @@ package com.prism.prism_auth.repository;
 
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.prism.prism_auth.model.User;
@@ -64,4 +67,8 @@ public interface UserRepository extends MongoRepository<User, String> {
      * @return true if user exists, false otherwise
      */
     boolean existsByUsername(String username);
+
+    @Query("{ $or: [ { 'username': { $regex: ?0, $options: 'i' } }, { 'email': { $regex: ?1, $options: 'i' } } ] }")
+    Page<User> findByUsernameContainingIgnoreCaseOrEmailContainingIgnoreCase(String username, String email,
+            Pageable pageable);
 }
